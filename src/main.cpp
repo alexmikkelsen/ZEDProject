@@ -13,7 +13,7 @@
 
 // ZED
 #include "zed/Camera.hpp"
-//HAHA
+//HAHA. Nej ikke HAHA blah
 // Input from keyboard
 char keyboard = ' ';
 
