@@ -1,0 +1,9 @@
+﻿  Building Custom Rule C:/GitHub/ZEDProject/CMakeLists.txt
+  CMake does not need to re-run because C:\GitHub\ZEDProject\build\CMakeFiles\generate.stamp is up-to-date.
+cl : Command line warning D9002: ignoring unknown option '-g'
+cl : Command line warning D9002: ignoring unknown option '-O3'
+cl : Command line warning D9002: ignoring unknown option '-std=c++0x'
+  main.cpp
+C:\GitHub\ZEDProject\src\main.cpp(5): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Program Files (x86)\ZED SDK\include\zed/Camera.hpp(120): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  ZED_PROJECT.vcxproj -> C:\GitHub\ZEDProject\build\Debug\ZED_PROJECT.exe
