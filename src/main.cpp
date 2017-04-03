@@ -15,6 +15,7 @@
 #include "zed/Camera.hpp"
 //HAHA. Nej ikke HAHA blah
 // Input from keyboard
+//ALLAN WAS HEERE
 char keyboard = ' ';
 
 int main(int argc, char** argv)
