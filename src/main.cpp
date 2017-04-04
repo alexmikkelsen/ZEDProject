@@ -16,7 +16,6 @@
 //HAHA. Nej ikke HAHA blah
 // Input from keyboard
 //ALLAN WAS HEERE
-//Daniel was here
 char keyboard = ' ';
 
 int main(int argc, char** argv)
