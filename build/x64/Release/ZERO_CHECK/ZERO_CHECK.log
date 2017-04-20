@@ -1,3 +1,2 @@
 ﻿  Checking Build System
-  The system cannot find the path specified.
-C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppCommon.targets(171,5): error MSB6006: "cmd.exe" exited with code 3.
+  CMake does not need to re-run because C:/GitHub/ZEDProject/build/CMakeFiles/generate.stamp is up-to-date.
