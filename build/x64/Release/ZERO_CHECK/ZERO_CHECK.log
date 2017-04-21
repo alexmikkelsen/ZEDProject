@@ -1,2 +1,13 @@
 ﻿  Checking Build System
-  CMake does not need to re-run because C:/GitHub/ZEDProject/build/CMakeFiles/generate.stamp is up-to-date.
+  CMake is re-running because C:/GitHub/ZEDProject/build/CMakeFiles/generate.stamp is out-of-date.
+    the file 'C:/Program Files/CMake/share/cmake-3.8/Modules/CMakeDetermineSystem.cmake'
+    is newer than 'C:/GitHub/ZEDProject/build/CMakeFiles/generate.stamp.depend'
+    result='0'
+  -- OpenCV ARCH: x64
+  -- OpenCV RUNTIME: vc14
+  -- OpenCV STATIC: ON
+  -- Found OpenCV 3.1.0 in C:/Program Files (x86)/ZED SDK/dependencies/opencv_3.1.0/x64/vc14/lib
+  -- You might need to add C:\Program Files (x86)\ZED SDK\dependencies\opencv_3.1.0\x64\vc14\bin to your PATH to be able to run your applications.
+  -- Configuring done
+  -- Generating done
+  -- Build files have been written to: C:/GitHub/ZEDProject/build
