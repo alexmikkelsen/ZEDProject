@@ -129,13 +129,16 @@ int main(int argc, char **argv) {
 														   // Resize and display with OpenCV
 			cv::resize(image2, image_ocv_display, displaySize);
 			imshow("Image", image_ocv_display);
+			cv::moveWindow("Image", 800, 0);
 
 			cv::resize(depth_image_ocv, depth_image_ocv_display, displaySize);
 			imshow("Depth", depth_image_ocv_display);
+			cv::moveWindow("Depth", 0, 0);
 
 			//Displaying
 			cv::resize(image_ocv, yC_ocv_display, displaySize);
 			imshow("YC", yC_ocv_display);
+			cv::moveWindow("YC", 0, 400);
 
 			pMOG2->apply(yC_ocv_display, fgmaskMOG2);
 
@@ -149,6 +152,7 @@ int main(int argc, char **argv) {
 				cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
 			//show the current frame and the fg masks
 			cv::imshow("FG Mask MOG 2", fgmaskMOG2);
+			cv::moveWindow("FG Mask MOG 2", 800, 400);
 
 			key = cv::waitKey(10);
 		}
