@@ -51,17 +51,17 @@ int main(int argc, char **argv) {
 	InitParameters init_params;
 	init_params.camera_resolution = RESOLUTION_HD720;
 	init_params.depth_mode = DEPTH_MODE_PERFORMANCE;
-	init_params.coordinate_units = sl::UNIT_MILLIMETER;
-	init_params.svo_input_filename = ("C:\GitHub\svo recording\build\mysvo.svo"),false;
-	init_params.camera_fps = 0;
-	init_params.svo_real_time_mode = false;
+	init_params.coordinate_units = sl::UNIT_METER;
+	init_params.svo_input_filename = ("C:/GitHub/svo recording/build/mysvo.svo"),false;
+	//init_params.camera_fps = 0;
+	/*init_params.svo_real_time_mode = false;
 	init_params.coordinate_system = COORDINATE_SYSTEM_IMAGE;
 	init_params.sdk_verbose = false;
 	init_params.sdk_gpu_id = -1;
 	init_params.depth_minimum_distance = -1;
 	init_params.camera_disable_self_calib = false;
 	init_params.camera_image_flip = false;
-
+	*/
 	// Open the camera
 	ERROR_CODE err = zed.open(init_params);
 	if (err != SUCCESS)
@@ -76,6 +76,7 @@ int main(int argc, char **argv) {
 															 // Create a sl::Mat and then construct a cv::Mat using the ptr to sl::Mat data.
 	Resolution image_size = zed.getResolution();
 	sl::Mat image_zed(image_size, sl::MAT_TYPE_8U_C4); // Create a sl::Mat to handle Left image
+	//sl::Mat image_zed2(image_size, sl::MAT_TYPE_8U_C4);
 	cv::Mat image_ocv = slMat2cvMat(image_zed);
 	sl::Mat depth_image_zed(image_size, MAT_TYPE_8U_C4);
 	cv::Mat depth_image_ocv = slMat2cvMat(depth_image_zed);
@@ -104,7 +105,7 @@ int main(int argc, char **argv) {
 		// Grab and display image and depth 
 		if (zed.grab(runtime_parameters) == SUCCESS) {
 
-			zed.retrieveImage(image_zed, VIEW_RIGHT_UNRECTIFIED_GRAY);
+			//zed.retrieveImage(image_zed2, VIEW_RIGHT_UNRECTIFIED_GRAY);
 			zed.retrieveImage(image_zed, VIEW_LEFT); // Retrieve the left image
 			zed.retrieveImage(depth_image_zed, VIEW_DEPTH); //Retrieve the depth view (image)
 			zed.retrieveMeasure(mouseStruct.depth, MEASURE_DEPTH); // Retrieve the depth measure (32bits)
