@@ -29,6 +29,8 @@
 #include <opencv2/opencv.hpp>
 #include <sl/Core.hpp>
 #include <sl/defines.hpp>
+#include "opencv2/video.hpp"
+#include "opencv2/video/background_segm.hpp"
 
 using namespace sl;
 
@@ -42,6 +44,12 @@ mouseOCV mouseStruct;
 static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, void * param);
 cv::Mat slMat2cvMat(sl::Mat& input);
 
+// Create Mat objects for background subtraction
+cv::Mat currentframe;
+cv::Mat fgmaskMOG2;
+
+cv::Ptr<cv::BackgroundSubtractor> pMOG2;
+
 int main(int argc, char **argv) {
 
 	// Create a ZED camera object
@@ -52,7 +60,7 @@ int main(int argc, char **argv) {
 	init_params.camera_resolution = RESOLUTION_HD720;
 	init_params.depth_mode = DEPTH_MODE_PERFORMANCE;
 	init_params.coordinate_units = sl::UNIT_METER;
-	init_params.svo_input_filename = ("C:/GitHub/svo recording/build/mysvo.svo"),false;
+	init_params.svo_input_filename = ("C:/GitHub/ZEDProject/mynewsvo.svo"), false;
 	//init_params.camera_fps = 0;
 	/*init_params.svo_real_time_mode = false;
 	init_params.coordinate_system = COORDINATE_SYSTEM_IMAGE;
@@ -76,7 +84,7 @@ int main(int argc, char **argv) {
 															 // Create a sl::Mat and then construct a cv::Mat using the ptr to sl::Mat data.
 	Resolution image_size = zed.getResolution();
 	sl::Mat image_zed(image_size, sl::MAT_TYPE_8U_C4); // Create a sl::Mat to handle Left image
-	//sl::Mat image_zed2(image_size, sl::MAT_TYPE_8U_C4);
+	cv::Mat image2 = slMat2cvMat(image_zed); //New mat
 	cv::Mat image_ocv = slMat2cvMat(image_zed);
 	sl::Mat depth_image_zed(image_size, MAT_TYPE_8U_C4);
 	cv::Mat depth_image_ocv = slMat2cvMat(depth_image_zed);
@@ -86,8 +94,14 @@ int main(int argc, char **argv) {
 	cv::Size displaySize(720, 404);
 	cv::Mat image_ocv_display(displaySize, CV_8UC4);
 	cv::Mat depth_image_ocv_display(displaySize, CV_8UC4);
+	cv::Mat yC_ocv_display(displaySize, CV_8UC4);
 
-	// Mouse callback initialization
+	//create GUI windows
+	cv::namedWindow("FG Mask MOG 2");
+
+	pMOG2 = cv::createBackgroundSubtractorMOG2(); //MOG2 approach
+
+												  // Mouse callback initialization
 	mouseStruct.depth.alloc(image_size, MAT_TYPE_32F_C1);
 	mouseStruct._resize = displaySize;
 
@@ -110,11 +124,31 @@ int main(int argc, char **argv) {
 			zed.retrieveImage(depth_image_zed, VIEW_DEPTH); //Retrieve the depth view (image)
 			zed.retrieveMeasure(mouseStruct.depth, MEASURE_DEPTH); // Retrieve the depth measure (32bits)
 
-																   // Resize and display with OpenCV
-			cv::resize(image_ocv, image_ocv_display, displaySize);
+			cv::cvtColor(image2, image_ocv, CV_BGR2YCrCb); //Conversion
+
+														   // Resize and display with OpenCV
+			cv::resize(image2, image_ocv_display, displaySize);
 			imshow("Image", image_ocv_display);
+
 			cv::resize(depth_image_ocv, depth_image_ocv_display, displaySize);
 			imshow("Depth", depth_image_ocv_display);
+
+			//Displaying
+			cv::resize(image_ocv, yC_ocv_display, displaySize);
+			imshow("YC", yC_ocv_display);
+
+			pMOG2->apply(yC_ocv_display, fgmaskMOG2);
+
+			//get the frame number and write it on the current frame
+			std::stringstream ss;
+			rectangle(image_ocv_display, cv::Point(10, 2), cv::Point(100, 20),
+				cv::Scalar(255, 255, 255), -1);
+			//ss << zed.get(cv::CAP_PROP_POS_FRAMES);
+			std::string frameNumberString = ss.str();
+			putText(image_ocv_display, frameNumberString.c_str(), cv::Point(15, 15),
+				cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
+			//show the current frame and the fg masks
+			cv::imshow("FG Mask MOG 2", fgmaskMOG2);
 
 			key = cv::waitKey(10);
 		}
