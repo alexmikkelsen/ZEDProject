@@ -126,9 +126,20 @@ int main(int argc, char **argv) {
 
 			cv::cvtColor(image2, image_ocv, CV_BGR2YCrCb); //Conversion
 
+			cv::Mat ycc[3];
+
+			cv::split(image_ocv, ycc);
+
+			cv::Mat y = ycc[0]*0.6;
+			cv::Mat cb = ycc[1];
+			cv::Mat cr = ycc[2];
+			ycc[0] = y;
+
+			cv::merge(ycc,3,image_ocv);
+			
 														   // Resize and display with OpenCV
 			cv::resize(image2, image_ocv_display, displaySize);
-			imshow("Image", image_ocv_display);
+			imshow("Image", image2);
 			cv::moveWindow("Image", 800, 0);
 
 			cv::resize(depth_image_ocv, depth_image_ocv_display, displaySize);
@@ -137,11 +148,22 @@ int main(int argc, char **argv) {
 
 			//Displaying
 			cv::resize(image_ocv, yC_ocv_display, displaySize);
-			imshow("YC", yC_ocv_display);
+			imshow("YC", image_ocv);
 			cv::moveWindow("YC", 0, 400);
-
+			
 			pMOG2->apply(yC_ocv_display, fgmaskMOG2);
+			
+			cv::SimpleBlobDetector::Params params;
+			params.minDistBetweenBlobs = 10.0;  // minimum 10 pixels between blobs
+			params.filterByArea = true;         // filter my blobs by area of blob
+			params.minArea = 20.0;              // min 20 pixels squared
+			params.maxArea = 500.0;             // max 500 pixels squared
+			cv::SimpleBlobDetector myBlobDetector;
+			std::vector<cv::KeyPoint> myBlobs;
+			myBlobDetector.detect(fgmaskMOG2, myBlobs);
 
+			//cv::inRange(fgmaskMOG2, cv::Scalar(0, 0, 0), cv::Scalar(0, 255, 255), image_ocv);
+			
 			//get the frame number and write it on the current frame
 			std::stringstream ss;
 			rectangle(image_ocv_display, cv::Point(10, 2), cv::Point(100, 20),
