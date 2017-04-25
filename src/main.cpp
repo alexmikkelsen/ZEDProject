@@ -25,12 +25,16 @@
 ** Most of the functions of the ZED SDK are linked with a key press event (using OpenCV)         **
 ***************************************************************************************************/
 
+
+#include <iostream>
 #include <sl/Camera.hpp>
 #include <opencv2/opencv.hpp>
 #include <sl/Core.hpp>
 #include <sl/defines.hpp>
 #include "opencv2/video.hpp"
 #include "opencv2/video/background_segm.hpp"
+#include <opencv2/imgproc/imgproc.hpp>
+#include "opencv2/imgcodecs.hpp"
 
 using namespace sl;
 
@@ -60,7 +64,7 @@ int main(int argc, char **argv) {
 	init_params.camera_resolution = RESOLUTION_HD720;
 	init_params.depth_mode = DEPTH_MODE_PERFORMANCE;
 	init_params.coordinate_units = sl::UNIT_METER;
-	init_params.svo_input_filename = ("C:/GitHub/ZEDProject/mynewsvo.svo"), false;
+	init_params.svo_input_filename = ("C:/GitHub/ZEDProject/newestsvo.svo"), false;
 	//init_params.camera_fps = 0;
 	/*init_params.svo_real_time_mode = false;
 	init_params.coordinate_system = COORDINATE_SYSTEM_IMAGE;
@@ -91,10 +95,12 @@ int main(int argc, char **argv) {
 
 
 	// Create OpenCV images to display (lower resolution to fit the screen)
-	cv::Size displaySize(720, 404);
+	cv::Size displaySize(600, 400);
 	cv::Mat image_ocv_display(displaySize, CV_8UC4);
 	cv::Mat depth_image_ocv_display(displaySize, CV_8UC4);
 	cv::Mat yC_ocv_display(displaySize, CV_8UC4);
+	cv::Mat contour_display(displaySize, CV_8UC4);
+	cv::Mat ycc_display(displaySize, CV_8UC4);
 
 	//create GUI windows
 	cv::namedWindow("FG Mask MOG 2");
@@ -124,46 +130,103 @@ int main(int argc, char **argv) {
 			zed.retrieveImage(depth_image_zed, VIEW_DEPTH); //Retrieve the depth view (image)
 			zed.retrieveMeasure(mouseStruct.depth, MEASURE_DEPTH); // Retrieve the depth measure (32bits)
 
-			cv::cvtColor(image2, image_ocv, CV_BGR2YCrCb); //Conversion
-
-			cv::Mat ycc[3];
-
-			cv::split(image_ocv, ycc);
-
-			cv::Mat y = ycc[0]*0.6;
-			cv::Mat cb = ycc[1];
-			cv::Mat cr = ycc[2];
-			ycc[0] = y;
-
-			cv::merge(ycc,3,image_ocv);
-			
-														   // Resize and display with OpenCV
+																   // Displays RGB
 			cv::resize(image2, image_ocv_display, displaySize);
-			imshow("Image", image2);
-			cv::moveWindow("Image", 800, 0);
+			imshow("RGB", image_ocv_display);
+			cv::moveWindow("RGB", 800, 0);
 
+			//Displays Depth
 			cv::resize(depth_image_ocv, depth_image_ocv_display, displaySize);
 			imshow("Depth", depth_image_ocv_display);
 			cv::moveWindow("Depth", 0, 0);
 
-			//Displaying
-			cv::resize(image_ocv, yC_ocv_display, displaySize);
-			imshow("YC", image_ocv);
-			cv::moveWindow("YC", 0, 400);
-			
-			pMOG2->apply(yC_ocv_display, fgmaskMOG2);
-			
-			cv::SimpleBlobDetector::Params params;
-			params.minDistBetweenBlobs = 10.0;  // minimum 10 pixels between blobs
-			params.filterByArea = true;         // filter my blobs by area of blob
-			params.minArea = 20.0;              // min 20 pixels squared
-			params.maxArea = 500.0;             // max 500 pixels squared
-			cv::SimpleBlobDetector myBlobDetector;
+			//Conversion to YCC
+			cv::cvtColor(image2, image_ocv, CV_BGR2YCrCb);
+
+			//Splitting
+			cv::Mat ycc[3];
+			cv::split(image_ocv, ycc);
+
+			cv::Mat y = ycc[0] * 0.6;
+			cv::Mat cb = ycc[1];
+			cv::Mat cr = ycc[2];
+			ycc[0] = y;
+
+			//Merging channels
+			cv::merge(ycc, 3, image_ocv);
+
+			//Displaying YCC 
+			cv::resize(image_ocv, ycc_display, displaySize);
+			imshow("YCC", ycc_display);
+			cv::moveWindow("YCC", 0, 500);
+
+			//Apply background subtraction
+			pMOG2->apply(image_ocv, fgmaskMOG2);
+
+			//Closing
+			cv::Mat element = cv::Mat::ones(10, 10, CV_8UC1); //Kernel
+			cv::erode(fgmaskMOG2, fgmaskMOG2, element);
+			cv::dilate(fgmaskMOG2, fgmaskMOG2, element);
+
+			//opening
+			cv::dilate(fgmaskMOG2, fgmaskMOG2, element);
+			cv::erode(fgmaskMOG2, fgmaskMOG2, element);
+
+			imshow("Segmentation", fgmaskMOG2);
+
+			//cv::bitwise_not(fgmaskMOG2, fgmaskMOG2);
+
+			//cv::cvtColor(fgmaskMOG2, fgmaskMOG2, CV_BGR2GRAY);
+
+			//cv::Canny(fgmaskMOG2, fgmaskMOG2, 75, 150, 3);
+			std::vector<std::vector<cv::Point>> contours;
+			std::vector<cv::Vec4i> hierarchy;
+			std::vector<std::vector<cv::Point>> hull(contours.size());
+			cv::Mat drawing = cv::Mat::zeros(fgmaskMOG2.size(), CV_8UC3);
+			int largest_area, largest_contour_index = 0;
+			cv::Rect bounding_rect;
+
+			cv::findContours(fgmaskMOG2, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+
+			for (int i = 0; i < contours.size(); i++) {
+				double a = cv::contourArea(contours[i], false);
+				if (a > largest_area) {
+					largest_area = a;
+					largest_contour_index = i;
+					bounding_rect = cv::boundingRect(contours[i]);
+				}
+				//cv::rectangle(image2,bounding_rect, cv::Scalar(100, 255, 0),10);
+
+			}
+			/*
+			for (int j = 0; j < contours.size(); j++) {
+			cv::convexHull(contours[j], hull[j], false);
+			}*/
+
+			for (int j = 0; j < contours.size(); j++) {
+				cv::drawContours(image2, contours, (int)j, CV_RGB(255, 100, 0), -1, 8, hierarchy, 0, cv::Point());
+				cv::drawContours(image2, hull, (int)j, CV_RGB(255, 100, 0), 2, 8, hierarchy, 0, cv::Point());
+			}
+
+
+
+			/*cv::SimpleBlobDetector::Params params;
+			//params.minDistBetweenBlobs = 10.0;  // minimum 10 pixels between blobs
+			//	params.filterByArea = true;         // filter my blobs by area of blob
+			//params.minArea = 20;              // min 20 pixels squared
+			//params.maxArea = 500.0;             // max 500 pixels squared
+			cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
 			std::vector<cv::KeyPoint> myBlobs;
-			myBlobDetector.detect(fgmaskMOG2, myBlobs);
+			detector->detect(fgmaskMOG2, myBlobs);
+			*/
+
+
+			/*cv::Mat imWithKeypoints;
+			cv::drawKeypoints(fgmaskMOG2, myBlobs, imWithKeypoints, cv::Scalar(0, 0, 255),cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+			imshow("blobs", imWithKeypoints);*/
 
 			//cv::inRange(fgmaskMOG2, cv::Scalar(0, 0, 0), cv::Scalar(0, 255, 255), image_ocv);
-			
+
 			//get the frame number and write it on the current frame
 			std::stringstream ss;
 			rectangle(image_ocv_display, cv::Point(10, 2), cv::Point(100, 20),
@@ -172,9 +235,13 @@ int main(int argc, char **argv) {
 			std::string frameNumberString = ss.str();
 			putText(image_ocv_display, frameNumberString.c_str(), cv::Point(15, 15),
 				cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
+
 			//show the current frame and the fg masks
-			cv::imshow("FG Mask MOG 2", fgmaskMOG2);
-			cv::moveWindow("FG Mask MOG 2", 800, 400);
+			cv::resize(image2, contour_display, displaySize);
+			cv::imshow("Contour Mask", contour_display);
+			cv::moveWindow("Contour Mask", 800, 500);
+
+
 
 			key = cv::waitKey(10);
 		}
