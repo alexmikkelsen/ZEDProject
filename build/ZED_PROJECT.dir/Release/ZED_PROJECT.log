@@ -2,6 +2,8 @@
 cl : Command line warning D9002: ignoring unknown option '-O3'
 cl : Command line warning D9002: ignoring unknown option '-std=c++0x'
   main.cpp
+C:\Program Files (x86)\ZED SDK\include\sl/types.hpp(264): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\string.h(346): note: see declaration of 'strncpy'
 C:\Program Files (x86)\ZED SDK\include\sl/Mesh.hpp(118): warning C4251: 'sl::Mesh::vertices': class 'std::vector<sl::float3,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'sl::Mesh'
           with
           [
@@ -80,7 +82,9 @@ C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(476): warning C4251: 'sl::S
   C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(343): note: see declaration of 'std::pair<float,float>'
 C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(558): warning C4251: 'sl::Pose::pose_data': class 'sl::Transform' needs to have dll-interface to be used by clients of class 'sl::Pose'
   C:\Program Files (x86)\ZED SDK\include\sl/Core.hpp(859): note: see declaration of 'sl::Transform'
-C:\GitHub\ZEDProject\src\main.cpp(190): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(191): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(228): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(190): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(339): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(340): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(377): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\github\zedproject\src\main.cpp(189): warning C4700: uninitialized local variable 'largest_area' used
   ZED_PROJECT.vcxproj -> C:\GitHub\ZEDProject\build\Release\ZED_PROJECT.exe

@@ -33,8 +33,10 @@
 #include <sl/defines.hpp>
 #include "opencv2/video.hpp"
 #include "opencv2/video/background_segm.hpp"
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc.hpp>
 #include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+#include <stdio.h>
 
 using namespace sl;
 
@@ -144,17 +146,11 @@ int main(int argc, char **argv) {
 			cv::cvtColor(image2, image_ocv, CV_BGR2YCrCb);
 
 			//Splitting
-			cv::Mat ycc[3];
-			cv::split(image_ocv, ycc);
-
-			cv::Mat y = ycc[0] * 0.6;
-			cv::Mat cb = ycc[1];
-			cv::Mat cr = ycc[2];
-			ycc[0] = y;
-
-			//Merging channels
-			cv::merge(ycc, 3, image_ocv);
-
+			std::vector<cv::Mat> channels;
+			//cv::split(image_ocv, channels);
+			//cv::equalizeHist(channels[0], channels[0]);
+			// cv::merge(channels, image_ocv);
+			
 			//Displaying YCC 
 			cv::resize(image_ocv, ycc_display, displaySize);
 			imshow("YCC", ycc_display);
@@ -172,7 +168,7 @@ int main(int argc, char **argv) {
 			cv::dilate(fgmaskMOG2, fgmaskMOG2, element);
 			cv::erode(fgmaskMOG2, fgmaskMOG2, element);
 
-			imshow("Segmentation", fgmaskMOG2);
+			//imshow("Segmentation", fgmaskMOG2);
 
 			//cv::bitwise_not(fgmaskMOG2, fgmaskMOG2);
 
@@ -193,9 +189,9 @@ int main(int argc, char **argv) {
 				if (a > largest_area) {
 					largest_area = a;
 					largest_contour_index = i;
-					bounding_rect = cv::boundingRect(contours[i]);
+					
 				}
-				//cv::rectangle(image2,bounding_rect, cv::Scalar(100, 255, 0),10);
+				
 
 			}
 			/*
@@ -204,11 +200,97 @@ int main(int argc, char **argv) {
 			}*/
 
 			for (int j = 0; j < contours.size(); j++) {
-				cv::drawContours(image2, contours, (int)j, CV_RGB(255, 100, 0), -1, 8, hierarchy, 0, cv::Point());
-				cv::drawContours(image2, hull, (int)j, CV_RGB(255, 100, 0), 2, 8, hierarchy, 0, cv::Point());
+				//cv::drawContours(image2, contours, largest_contour_index, CV_RGB(255, 0, 0), 6, 8, hierarchy, 0, cv::Point());
+				//cv::drawContours(image2, hull, (int)j, CV_RGB(255, 100, 0), 2, 8, hierarchy, 0, cv::Point());
+				bounding_rect = cv::boundingRect(contours[largest_contour_index]);
+				cv::rectangle(image2, bounding_rect, cv::Scalar(100, 255, 0), 8);
 			}
+			
+			
+				
+			int histSize = 256;
+			float range[] = { 0, 255};
+			const float* histRange = { range };
+			bool uniform = true; 
+			bool accumulate = false;
+			cv::Mat b_hist, g_hist, r_hist;
+
+			if (bounding_rect.width > 100 && bounding_rect.height > 600) {
+				//cv::rectangle(image2, cv::Point(0,0), cv::Point(100,100), cv::Scalar(255, 0, 0), 8);
+				//cv::waitKey(0);
+				cv::Mat cropImg = image2(bounding_rect);
+				cv::resize(cropImg, cropImg, cv::Size(200,700));
+				cv::imshow("Cropped", cropImg);
+				cv::moveWindow("Cropped", 1600, 0);
+
+				std::vector<cv::Mat> bgr_planes;
+				split(cropImg, bgr_planes);
+				cv::Mat blue  = bgr_planes[0];
+				cv::Mat green = bgr_planes[1];
+				cv::Mat red = bgr_planes[2];
+
+				/// Compute the histograms:
+				cv::calcHist(&blue, 1, 0, cv::Mat(), b_hist, 1, &histSize, &histRange, uniform, accumulate);
+				cv::calcHist(&green, 1, 0, cv:: Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate);
+				cv::calcHist(&red, 1, 0, cv::Mat(), r_hist, 1, &histSize, &histRange, uniform, accumulate);
+				
+				// Draw the histograms for B, G and R
+				int hist_w = 512; int hist_h = 400;
+				int bin_w = cvRound((double)hist_w / histSize);
 
 
+				cv::Mat histImage(hist_h, hist_w, CV_8UC3, cv::Scalar(0, 0, 0));
+
+				/// Normalize the result to [ 0, histImage.rows ]
+				cv::normalize(b_hist, b_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
+				cv::normalize(g_hist, g_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
+				cv::normalize(r_hist, r_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
+
+				int blue_mean, green_mean, red_mean;
+
+				for (int i = 1; i < histSize; i++)
+				{
+					line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(b_hist.at<float>(i - 1))),
+						cv::Point(bin_w*(i), hist_h - cvRound(b_hist.at<float>(i))),
+						cv::Scalar(255, 0, 0), 2, 8, 0);
+
+					blue_mean = blue_mean + cvRound(b_hist.at<float>(i - 1));
+
+					line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(g_hist.at<float>(i - 1))),
+						cv::Point(bin_w*(i), hist_h - cvRound(g_hist.at<float>(i))),
+						cv::Scalar(0, 255, 0), 2, 8, 0);
+
+					green_mean = green_mean + cvRound(g_hist.at<float>(i - 1));
+
+					line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(r_hist.at<float>(i - 1))),
+						cv::Point(bin_w*(i), hist_h - cvRound(r_hist.at<float>(i))),
+						cv::Scalar(0, 0, 255), 2, 8, 0);
+
+					red_mean = red_mean + cvRound(r_hist.at<float>(i - 1));
+					
+				}
+				blue_mean = blue_mean / 256;
+				green_mean = green_mean / 256;
+				red_mean = red_mean / 256;
+
+
+				cv::FileStorage fs("Histogram_Means.txt", cv::FileStorage::WRITE);
+				fs << "BlueMean" << blue_mean;
+				fs << "GreenMean" << green_mean;
+				fs << "RedMean" << red_mean;
+				fs.release();
+				imshow("calcHist demo1", histImage);
+				
+
+			//	cv::Scalar average = cv::mean(image2, cropImg);
+			//	std::cout << average << std::endl;
+			}
+			else {
+				//cv::rectangle(image2, cv::Point(0, 0), cv::Point(100, 100), cv::Scalar(0, 255, 0), 8);
+			}			
+
+	
+	
 
 			/*cv::SimpleBlobDetector::Params params;
 			//params.minDistBetweenBlobs = 10.0;  // minimum 10 pixels between blobs
