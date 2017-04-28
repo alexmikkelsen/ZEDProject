@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
 			bool accumulate = false;
 			cv::Mat b_hist, g_hist, r_hist;
 
-			if (bounding_rect.width > 100 && bounding_rect.height > 600) {
+			if (bounding_rect.width > 100 && bounding_rect.height > 400) {
 				//cv::rectangle(image2, cv::Point(0,0), cv::Point(100,100), cv::Scalar(255, 0, 0), 8);
 				//cv::waitKey(0);
 				cv::Mat cropImg = image2(bounding_rect);
@@ -273,15 +273,38 @@ int main(int argc, char **argv) {
 				green_mean = green_mean / 256;
 				red_mean = red_mean / 256;
 
+				cv::Vec3i col_Vec1{12,18,13 }; //high_exposure_w_scarf
+				cv::Vec3i col_Vec2{31,13,32}; //newestsvo2
+				cv::Vec3i col_Vec{ blue_mean,green_mean,red_mean };
+				
+				cv::Vec3i col_Vec_receive;
+				//col_Vec[0] =  blue_mean;
+				//col_Vec[1] =  green_mean;
+				//col_Vec[2] =  red_mean;
+				
+				int low = cv::norm(col_Vec1, col_Vec);
+				int high = cv::norm(col_Vec2, col_Vec);
+				if (low < high) {
+					std::cout <<"low"<< low << std::endl;
+				}
+				else {
+					std::cout << "high"<< high << std::endl;
+				}
+				
+					
+					
 
 				cv::FileStorage fs("Histogram_Means.txt", cv::FileStorage::WRITE);
-				fs << "BlueMean" << blue_mean;
-				fs << "GreenMean" << green_mean;
-				fs << "RedMean" << red_mean;
+				fs << "Means" << col_Vec;
 				fs.release();
-				imshow("calcHist demo1", histImage);
-				
-
+				imshow("calcHist demo", histImage);
+				/*
+				cv::FileStorage fs_receive("Histogram_Means.yml", cv::FileStorage::READ);
+				fs_receive["Means"] >>  col_Vec_receive;
+				col_Vec_receive = (int) fs_receive["Means"];
+				fs_receive.release();
+				std::cout <<"Vector:"  << col_Vec_receive << std::endl;
+				*/
 			//	cv::Scalar average = cv::mean(image2, cropImg);
 			//	std::cout << average << std::endl;
 			}
@@ -290,7 +313,7 @@ int main(int argc, char **argv) {
 			}			
 
 	
-	
+			
 
 			/*cv::SimpleBlobDetector::Params params;
 			//params.minDistBetweenBlobs = 10.0;  // minimum 10 pixels between blobs

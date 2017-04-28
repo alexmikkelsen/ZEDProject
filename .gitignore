@@ -222,3 +222,4 @@ mynewsvo.svo
 build/.vs/Project/v14/.suo
 build/Project.VC.db
 newestsvo.svo
+*.svo
