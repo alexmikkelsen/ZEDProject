@@ -120,6 +120,10 @@ int main(int argc, char **argv) {
 	// Jetson only. Execute the calling thread on 2nd core
 	Camera::sticktoCPUCore(2);
 
+	// Setup depth matrix
+	Mat depth;
+	depth.alloc(image_size, MAT_TYPE_32F_C1);
+
 	// Loop until 'q' is pressed
 	char key = ' ';
 	while (key != 'q') {
@@ -130,7 +134,7 @@ int main(int argc, char **argv) {
 			//zed.retrieveImage(image_zed2, VIEW_RIGHT_UNRECTIFIED_GRAY);
 			zed.retrieveImage(image_zed, VIEW_LEFT); // Retrieve the left image
 			zed.retrieveImage(depth_image_zed, VIEW_DEPTH); //Retrieve the depth view (image)
-			zed.retrieveMeasure(mouseStruct.depth, MEASURE_DEPTH); // Retrieve the depth measure (32bits)
+			zed.retrieveMeasure(depth, MEASURE_DEPTH); // Retrieve the depth measure (32bits)
 
 																   // Displays RGB
 			cv::resize(image2, image_ocv_display, displaySize);
@@ -222,6 +226,32 @@ int main(int argc, char **argv) {
 				cv::resize(cropImg, cropImg, cv::Size(200,700));
 				cv::imshow("Cropped", cropImg);
 				cv::moveWindow("Cropped", 1600, 0);
+
+				//Bounding Box Center
+				cv::Point center = cv::Point(bounding_rect.x + (bounding_rect.width / 2), bounding_rect.y + (bounding_rect.height / 2));
+
+				// print it:
+				std::cout << "Center point is at: " << center.x << " " << center.y << std::endl;
+
+				cv::circle(image2, center, 20, cv::Scalar(0, 0, 255), -1, 8, 0);
+
+				int x_int = (bounding_rect.x + (bounding_rect.width / 2));
+				int y_int = (bounding_rect.y + (bounding_rect.height / 2));
+
+				sl::float1 dist;
+				depth.getValue(x_int, y_int, &dist);
+
+				std::cout << std::endl;
+				if (isValidMeasure(dist))
+					std::cout << "Depth at (" << x_int << "," << y_int << ") : " << dist << "m";
+				else {
+					std::string depth_status;
+					if (dist == TOO_FAR) depth_status = ("Depth is too far.");
+					else if (dist == TOO_CLOSE) depth_status = ("Depth is too close.");
+					else depth_status = ("Depth not available");
+					std::cout << depth_status;
+				}
+				std::cout << std::endl;
 
 				std::vector<cv::Mat> bgr_planes;
 				split(cropImg, bgr_planes);

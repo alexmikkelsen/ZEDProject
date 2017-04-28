@@ -223,3 +223,8 @@ build/.vs/Project/v14/.suo
 build/Project.VC.db
 newestsvo.svo
 *.svo
+build/.vs/Project/v14/.suo
+build/Project.VC.db
+build/Release/ZED_PROJECT.exe
+build/ZED_PROJECT.dir/Release/main.obj
+build/ZED_PROJECT.dir/Release/ZED_PROJECT.log

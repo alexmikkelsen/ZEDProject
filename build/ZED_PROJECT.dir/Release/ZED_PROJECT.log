@@ -82,11 +82,11 @@ C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(476): warning C4251: 'sl::S
   C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(343): note: see declaration of 'std::pair<float,float>'
 C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(558): warning C4251: 'sl::Pose::pose_data': class 'sl::Transform' needs to have dll-interface to be used by clients of class 'sl::Pose'
   C:\Program Files (x86)\ZED SDK\include\sl/Core.hpp(859): note: see declaration of 'sl::Transform'
-C:\GitHub\ZEDProject\src\main.cpp(190): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(285): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(286): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(362): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(363): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(400): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-c:\github\zedproject\src\main.cpp(189): warning C4700: uninitialized local variable 'largest_area' used
+C:\GitHub\ZEDProject\src\main.cpp(194): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(322): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(323): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(399): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(400): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(437): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\github\zedproject\src\main.cpp(193): warning C4700: uninitialized local variable 'largest_area' used
   ZED_PROJECT.vcxproj -> C:\GitHub\ZEDProject\build\Release\ZED_PROJECT.exe
