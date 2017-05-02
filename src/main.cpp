@@ -37,6 +37,9 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
 #include <stdio.h>
+#include <math.h>
+#include <ctime>
+#include <chrono>
 
 using namespace sl;
 
@@ -53,6 +56,12 @@ cv::Mat slMat2cvMat(sl::Mat& input);
 // Create Mat objects for background subtraction
 cv::Mat currentframe;
 cv::Mat fgmaskMOG2;
+float distSum;
+int heightNumber = 0;
+bool hasPicture = false;
+float distMean = 0;
+float smallestDistance = 0;
+float receivedDistance = 0;
 
 cv::Ptr<cv::BackgroundSubtractor> pMOG2;
 
@@ -61,12 +70,16 @@ int main(int argc, char **argv) {
 	// Create a ZED camera object
 	Camera zed;
 
+	time_t now = time(0);
+
+	tm *ltm = localtime(&now);
+
 	// Set configuration parameters
 	InitParameters init_params;
 	init_params.camera_resolution = RESOLUTION_HD720;
 	init_params.depth_mode = DEPTH_MODE_PERFORMANCE;
 	init_params.coordinate_units = sl::UNIT_METER;
-	init_params.svo_input_filename = ("C:/GitHub/ZEDProject/newestsvo.svo"), false;
+	init_params.svo_input_filename = ("C:/GitHub/ZEDProject/high_exposure_w_scarf.svo"), false;
 	//init_params.camera_fps = 0;
 	/*init_params.svo_real_time_mode = false;
 	init_params.coordinate_system = COORDINATE_SYSTEM_IMAGE;
@@ -151,9 +164,7 @@ int main(int argc, char **argv) {
 
 			//Splitting
 			std::vector<cv::Mat> channels;
-			//cv::split(image_ocv, channels);
-			//cv::equalizeHist(channels[0], channels[0]);
-			// cv::merge(channels, image_ocv);
+		
 			
 			//Displaying YCC 
 			cv::resize(image_ocv, ycc_display, displaySize);
@@ -196,7 +207,6 @@ int main(int argc, char **argv) {
 					
 				}
 				
-
 			}
 			/*
 			for (int j = 0; j < contours.size(); j++) {
@@ -211,7 +221,7 @@ int main(int argc, char **argv) {
 			}
 			
 			
-				
+			
 			int histSize = 256;
 			float range[] = { 0, 255};
 			const float* histRange = { range };
@@ -222,48 +232,70 @@ int main(int argc, char **argv) {
 			if (bounding_rect.width > 100 && bounding_rect.height > 400) {
 				//cv::rectangle(image2, cv::Point(0,0), cv::Point(100,100), cv::Scalar(255, 0, 0), 8);
 				//cv::waitKey(0);
-				cv::Mat cropImg = image2(bounding_rect);
-				cv::resize(cropImg, cropImg, cv::Size(200,700));
+				cv::Mat cropImg = image_ocv(bounding_rect);
+				//cv::resize(cropImg, cropImg, cv::Size(200,700));
 				cv::imshow("Cropped", cropImg);
 				cv::moveWindow("Cropped", 1600, 0);
 
-				//Bounding Box Center
-				cv::Point center = cv::Point(bounding_rect.x + (bounding_rect.width / 2), bounding_rect.y + (bounding_rect.height / 2));
 
-				// print it:
-				std::cout << "Center point is at: " << center.x << " " << center.y << std::endl;
+				if (bounding_rect.x > 400 && bounding_rect.x < 600) {
 
-				cv::circle(image2, center, 20, cv::Scalar(0, 0, 255), -1, 8, 0);
+					//Saves picture
+					if (hasPicture == false) {
+						cv::imwrite("C:/GitHub/ZEDProject/build/cropImg.jpg", cropImg);
+						hasPicture = true;
+					}
 
-				int x_int = (bounding_rect.x + (bounding_rect.width / 2));
-				int y_int = (bounding_rect.y + (bounding_rect.height / 2));
+					//Bounding Box Center
+					cv::Point center = cv::Point(bounding_rect.x + (bounding_rect.width / 2), bounding_rect.y + (bounding_rect.height / 2));
 
-				sl::float1 dist;
-				depth.getValue(x_int, y_int, &dist);
+					// print it:
+					//std::cout << "Center point is at: " << center.x << " " << center.y << std::endl;
 
-				std::cout << std::endl;
-				if (isValidMeasure(dist))
-					std::cout << "Depth at (" << x_int << "," << y_int << ") : " << dist << "m";
-				else {
-					std::string depth_status;
-					if (dist == TOO_FAR) depth_status = ("Depth is too far.");
-					else if (dist == TOO_CLOSE) depth_status = ("Depth is too close.");
-					else depth_status = ("Depth not available");
-					std::cout << depth_status;
+					cv::circle(image2, center, 20, cv::Scalar(0, 0, 255), -1, 8, 0);
+
+					int x_int = (bounding_rect.x + (bounding_rect.width / 2));
+					int y_int = (bounding_rect.y + (bounding_rect.height / 2));
+
+					float dist;
+					depth.getValue(x_int, y_int, &dist);
+
+					distSum = distSum + dist;
+
+					heightNumber++;
+
+					/*
+
+					std::cout << std::endl;
+					if (isValidMeasure(dist))
+						std::cout << "Depth at (" << x_int << "," << y_int << ") : " << dist << "m";
+					else {
+						std::string depth_status;
+						if (dist == TOO_FAR) depth_status = ("Depth is too far.");
+						else if (dist == TOO_CLOSE) depth_status = ("Depth is too close.");
+						else depth_status = ("Depth not available");
+						std::cout << depth_status;
+					}*/
 				}
-				std::cout << std::endl;
+
+
+				distMean = distSum / heightNumber;
+
+				if (distMean > 0) {
+					std::cout << "depthhhh: " << distMean << std::endl;
+				}
 
 				std::vector<cv::Mat> bgr_planes;
 				split(cropImg, bgr_planes);
-				cv::Mat blue  = bgr_planes[0];
+				cv::Mat blue = bgr_planes[0];
 				cv::Mat green = bgr_planes[1];
 				cv::Mat red = bgr_planes[2];
 
 				/// Compute the histograms:
 				cv::calcHist(&blue, 1, 0, cv::Mat(), b_hist, 1, &histSize, &histRange, uniform, accumulate);
-				cv::calcHist(&green, 1, 0, cv:: Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate);
+				cv::calcHist(&green, 1, 0, cv::Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate);
 				cv::calcHist(&red, 1, 0, cv::Mat(), r_hist, 1, &histSize, &histRange, uniform, accumulate);
-				
+
 				// Draw the histograms for B, G and R
 				int hist_w = 512; int hist_h = 400;
 				int bin_w = cvRound((double)hist_w / histSize);
@@ -276,7 +308,7 @@ int main(int argc, char **argv) {
 				cv::normalize(g_hist, g_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
 				cv::normalize(r_hist, r_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
 
-				int blue_mean, green_mean, red_mean;
+				int blue_mean, green_mean, red_mean, colorNumber = 0;
 
 				for (int i = 1; i < histSize; i++)
 				{
@@ -297,50 +329,58 @@ int main(int argc, char **argv) {
 						cv::Scalar(0, 0, 255), 2, 8, 0);
 
 					red_mean = red_mean + cvRound(r_hist.at<float>(i - 1));
-					
+					colorNumber++;
 				}
-				blue_mean = blue_mean / 256;
-				green_mean = green_mean / 256;
-				red_mean = red_mean / 256;
+				blue_mean = blue_mean / colorNumber;
+				green_mean = green_mean / colorNumber;
+				red_mean = red_mean / colorNumber;
 
-				cv::Vec3i col_Vec1{12,18,13 }; //high_exposure_w_scarf
-				cv::Vec3i col_Vec2{31,13,32}; //newestsvo2
-				cv::Vec3i col_Vec{ blue_mean,green_mean,red_mean };
-				
-				cv::Vec3i col_Vec_receive;
-				//col_Vec[0] =  blue_mean;
-				//col_Vec[1] =  green_mean;
-				//col_Vec[2] =  red_mean;
-				
-				int low = cv::norm(col_Vec1, col_Vec);
-				int high = cv::norm(col_Vec2, col_Vec);
-				if (low < high) {
-					std::cout <<"low"<< low << std::endl;
+				cv::Vec4d col_Vec1{ 21.0,14.0,22.0, 2.0 }; //high_exposure_w_scarf
+				cv::Vec4d col_Vec2{ 48,5.0,9.0, 1.64 }; //newestsvo2
+				cv::Vec4d feature_Vec{ (double)blue_mean,(double)green_mean,(double)red_mean, (double)distMean };
+				cv::Vec4d col_Vec_receive;
+
+
+				if (distMean > 0.2) {
+					int high_exposure_w_scarf = cv::norm(col_Vec1, feature_Vec);
+					int newestsvo2 = cv::norm(col_Vec2, feature_Vec);
+					if (high_exposure_w_scarf < newestsvo2) {
+						std::cout << "high_exposure_w_scarf: " << high_exposure_w_scarf << std::endl;
+						smallestDistance = high_exposure_w_scarf;
+					}
+					else {
+						std::cout << "newestsvo2" << newestsvo2 << std::endl;
+						smallestDistance = newestsvo2;
+					}
+
+					int hour = ltm->tm_hour;
+					int min = ltm->tm_min;
+					int sec = ltm->tm_sec;
+
+					cv::FileStorage fs("Histogram_Means.txt", cv::FileStorage::WRITE);
+					fs << "Hour" << hour;
+					fs << "Minute" << min;
+					fs << "Seconds" << sec;
+					fs << "Means " << feature_Vec;
+					fs << "Shortest Distance " << smallestDistance;
+					fs.release();
+					imshow("calcHist demo", histImage);
+
+					
+					cv::FileStorage fs_receive("Histogram_Means.txt", cv::FileStorage::READ);
+					fs_receive["Smallest Distance"] >>  receivedDistance;
+
+					std::cout << " Sortest distace" << receivedDistance << std::endl;
+
+					//col_Vec_receive = (int) fs_receive["Means"];
+
+					fs_receive.release();
+					
 				}
 				else {
-					std::cout << "high"<< high << std::endl;
+					std::cout << "Waiting for data" << distMean << std::endl;
 				}
-				
-					
-					
-
-				cv::FileStorage fs("Histogram_Means.txt", cv::FileStorage::WRITE);
-				fs << "Means" << col_Vec;
-				fs.release();
-				imshow("calcHist demo", histImage);
-				/*
-				cv::FileStorage fs_receive("Histogram_Means.yml", cv::FileStorage::READ);
-				fs_receive["Means"] >>  col_Vec_receive;
-				col_Vec_receive = (int) fs_receive["Means"];
-				fs_receive.release();
-				std::cout <<"Vector:"  << col_Vec_receive << std::endl;
-				*/
-			//	cv::Scalar average = cv::mean(image2, cropImg);
-			//	std::cout << average << std::endl;
 			}
-			else {
-				//cv::rectangle(image2, cv::Point(0, 0), cv::Point(100, 100), cv::Scalar(0, 255, 0), 8);
-			}			
 
 	
 			
@@ -376,8 +416,6 @@ int main(int argc, char **argv) {
 			cv::imshow("Contour Mask", contour_display);
 			cv::moveWindow("Contour Mask", 800, 500);
 
-
-
 			key = cv::waitKey(10);
 		}
 	}
@@ -386,6 +424,7 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
+//MouseCallback
 static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, void * param) {
 	if (event == CV_EVENT_LBUTTONDOWN) {
 		mouseOCVStruct* data = (mouseOCVStruct*)param;
@@ -409,7 +448,7 @@ static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, v
 	}
 }
 
-
+//Mat Conversion
 cv::Mat slMat2cvMat(sl::Mat& input) {
 	//convert MAT_TYPE to CV_TYPE
 	int cv_type = -1;
