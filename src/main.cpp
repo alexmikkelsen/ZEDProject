@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 	init_params.camera_resolution = RESOLUTION_HD720;
 	init_params.depth_mode = DEPTH_MODE_PERFORMANCE;
 	init_params.coordinate_units = sl::UNIT_METER;
-	init_params.svo_input_filename = ("C:/GitHub/ZEDProject/high_exposure_w_scarf.svo"), false;
+	//init_params.svo_input_filename = ("C:/GitHub/ZEDProject/high_exposure_w_scarf.svo"), false;
 	//init_params.camera_fps = 0;
 	/*init_params.svo_real_time_mode = false;
 	init_params.coordinate_system = COORDINATE_SYSTEM_IMAGE;
@@ -91,8 +91,10 @@ int main(int argc, char **argv) {
 	*/
 	// Open the camera
 	ERROR_CODE err = zed.open(init_params);
-	if (err != SUCCESS)
-		return 1;
+	if (err != SUCCESS) {
+		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/newestsvo.svo"), false;
+		ERROR_CODE err = zed.open(init_params);
+	}
 
 	// Set runtime parameters after opening the camera
 	RuntimeParameters runtime_parameters;
@@ -282,7 +284,7 @@ int main(int argc, char **argv) {
 				distMean = distSum / heightNumber;
 
 				if (distMean > 0) {
-					std::cout << "depthhhh: " << distMean << std::endl;
+					std::cout << "Depth: " << distMean << std::endl;
 				}
 
 				std::vector<cv::Mat> bgr_planes;
@@ -345,11 +347,11 @@ int main(int argc, char **argv) {
 					int high_exposure_w_scarf = cv::norm(col_Vec1, feature_Vec);
 					int newestsvo2 = cv::norm(col_Vec2, feature_Vec);
 					if (high_exposure_w_scarf < newestsvo2) {
-						std::cout << "high_exposure_w_scarf: " << high_exposure_w_scarf << std::endl;
+						std::cout << "Closest to: high_exposure_w_scarf: " << high_exposure_w_scarf << std::endl;
 						smallestDistance = high_exposure_w_scarf;
 					}
 					else {
-						std::cout << "newestsvo2" << newestsvo2 << std::endl;
+						std::cout << "Closest to: newestsvo2" << newestsvo2 << std::endl;
 						smallestDistance = newestsvo2;
 					}
 
@@ -370,7 +372,7 @@ int main(int argc, char **argv) {
 					cv::FileStorage fs_receive("Histogram_Means.txt", cv::FileStorage::READ);
 					fs_receive["Smallest Distance"] >>  receivedDistance;
 
-					std::cout << " Sortest distace" << receivedDistance << std::endl;
+					std::cout << " Shortest distance" << receivedDistance << std::endl;
 
 					//col_Vec_receive = (int) fs_receive["Means"];
 
