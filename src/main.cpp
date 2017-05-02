@@ -1,48 +1,20 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2017, STEREOLABS.
-//
-// All rights reserved.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-///////////////////////////////////////////////////////////////////////////
-
-
-/***************************************************************************************************
-** This sample demonstrates how to grab images and depth/disparity map with the ZED SDK          **
-** Both images and depth/disparity map are displayed with OpenCV                                 **
-** Most of the functions of the ZED SDK are linked with a key press event (using OpenCV)         **
-***************************************************************************************************/
-
-
-#include <iostream>
+//#include <iostream>
 #include <sl/Camera.hpp>
-#include <opencv2/opencv.hpp>
-#include <sl/Core.hpp>
-#include <sl/defines.hpp>
-#include "opencv2/video.hpp"
-#include "opencv2/video/background_segm.hpp"
-#include <opencv2/imgproc.hpp>
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/highgui.hpp"
-#include <stdio.h>
-#include <math.h>
-#include <ctime>
-#include <chrono>
+//#include <opencv2/opencv.hpp>
+//#include <sl/Core.hpp>
+//#include <sl/defines.hpp>
+//#include "opencv2/video.hpp"
+//#include "opencv2/video/background_segm.hpp"
+//#include <opencv2/imgproc.hpp>
+//#include "opencv2/imgcodecs.hpp"
+//#include "opencv2/highgui.hpp"
+//#include <stdio.h>
+//#include <math.h>
+//#include <ctime>
+//#include <chrono>
 
 using namespace sl;
-
+/*
 typedef struct mouseOCVStruct {
 	Mat depth;
 	cv::Size _resize;
@@ -51,10 +23,11 @@ typedef struct mouseOCVStruct {
 mouseOCV mouseStruct;
 
 static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, void * param);
+*/
+
 cv::Mat slMat2cvMat(sl::Mat& input);
 
 // Create Mat objects for background subtraction
-cv::Mat currentframe;
 cv::Mat fgmaskMOG2;
 float distSum;
 int heightNumber = 0;
@@ -79,9 +52,8 @@ int main(int argc, char **argv) {
 	init_params.camera_resolution = RESOLUTION_HD720;
 	init_params.depth_mode = DEPTH_MODE_PERFORMANCE;
 	init_params.coordinate_units = sl::UNIT_METER;
-	//init_params.svo_input_filename = ("C:/GitHub/ZEDProject/high_exposure_w_scarf.svo"), false;
-	//init_params.camera_fps = 0;
-	/*init_params.svo_real_time_mode = false;
+	/*
+	init_params.camera_fps = 0;
 	init_params.coordinate_system = COORDINATE_SYSTEM_IMAGE;
 	init_params.sdk_verbose = false;
 	init_params.sdk_gpu_id = -1;
@@ -89,12 +61,17 @@ int main(int argc, char **argv) {
 	init_params.camera_disable_self_calib = false;
 	init_params.camera_image_flip = false;
 	*/
+
 	// Open the camera
 	ERROR_CODE err = zed.open(init_params);
 	if (err != SUCCESS) {
 		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/newestsvo.svo"), false;
+		init_params.svo_real_time_mode = true;
 		ERROR_CODE err = zed.open(init_params);
 	}
+
+	zed.setCameraSettings(CAMERA_SETTINGS_EXPOSURE, 80, false);
+	zed.setCameraSettings(CAMERA_SETTINGS_GAIN, 80, false);
 
 	// Set runtime parameters after opening the camera
 	RuntimeParameters runtime_parameters;
@@ -119,21 +96,15 @@ int main(int argc, char **argv) {
 	cv::Mat contour_display(displaySize, CV_8UC4);
 	cv::Mat ycc_display(displaySize, CV_8UC4);
 
-	//create GUI windows
-	cv::namedWindow("FG Mask MOG 2");
-
 	pMOG2 = cv::createBackgroundSubtractorMOG2(); //MOG2 approach
 
-												  // Mouse callback initialization
+	/*
+	// Mouse callback initialization 
 	mouseStruct.depth.alloc(image_size, MAT_TYPE_32F_C1);
 	mouseStruct._resize = displaySize;
-
+	*/
 	// Give a name to OpenCV Windows
 	cv::namedWindow("Depth", cv::WINDOW_AUTOSIZE);
-	cv::setMouseCallback("Depth", onMouseCallback, (void*)&mouseStruct);
-
-	// Jetson only. Execute the calling thread on 2nd core
-	Camera::sticktoCPUCore(2);
 
 	// Setup depth matrix
 	Mat depth;
@@ -146,12 +117,11 @@ int main(int argc, char **argv) {
 		// Grab and display image and depth 
 		if (zed.grab(runtime_parameters) == SUCCESS) {
 
-			//zed.retrieveImage(image_zed2, VIEW_RIGHT_UNRECTIFIED_GRAY);
 			zed.retrieveImage(image_zed, VIEW_LEFT); // Retrieve the left image
 			zed.retrieveImage(depth_image_zed, VIEW_DEPTH); //Retrieve the depth view (image)
 			zed.retrieveMeasure(depth, MEASURE_DEPTH); // Retrieve the depth measure (32bits)
 
-																   // Displays RGB
+			// Displays RGB
 			cv::resize(image2, image_ocv_display, displaySize);
 			imshow("RGB", image_ocv_display);
 			cv::moveWindow("RGB", 800, 0);
@@ -163,10 +133,6 @@ int main(int argc, char **argv) {
 
 			//Conversion to YCC
 			cv::cvtColor(image2, image_ocv, CV_BGR2YCrCb);
-
-			//Splitting
-			std::vector<cv::Mat> channels;
-		
 			
 			//Displaying YCC 
 			cv::resize(image_ocv, ycc_display, displaySize);
@@ -187,11 +153,6 @@ int main(int argc, char **argv) {
 
 			//imshow("Segmentation", fgmaskMOG2);
 
-			//cv::bitwise_not(fgmaskMOG2, fgmaskMOG2);
-
-			//cv::cvtColor(fgmaskMOG2, fgmaskMOG2, CV_BGR2GRAY);
-
-			//cv::Canny(fgmaskMOG2, fgmaskMOG2, 75, 150, 3);
 			std::vector<std::vector<cv::Point>> contours;
 			std::vector<cv::Vec4i> hierarchy;
 			std::vector<std::vector<cv::Point>> hull(contours.size());
@@ -210,10 +171,6 @@ int main(int argc, char **argv) {
 				}
 				
 			}
-			/*
-			for (int j = 0; j < contours.size(); j++) {
-			cv::convexHull(contours[j], hull[j], false);
-			}*/
 
 			for (int j = 0; j < contours.size(); j++) {
 				//cv::drawContours(image2, contours, largest_contour_index, CV_RGB(255, 0, 0), 6, 8, hierarchy, 0, cv::Point());
@@ -221,8 +178,6 @@ int main(int argc, char **argv) {
 				bounding_rect = cv::boundingRect(contours[largest_contour_index]);
 				cv::rectangle(image2, bounding_rect, cv::Scalar(100, 255, 0), 8);
 			}
-			
-			
 			
 			int histSize = 256;
 			float range[] = { 0, 255};
@@ -232,10 +187,7 @@ int main(int argc, char **argv) {
 			cv::Mat b_hist, g_hist, r_hist;
 
 			if (bounding_rect.width > 100 && bounding_rect.height > 400) {
-				//cv::rectangle(image2, cv::Point(0,0), cv::Point(100,100), cv::Scalar(255, 0, 0), 8);
-				//cv::waitKey(0);
 				cv::Mat cropImg = image_ocv(bounding_rect);
-				//cv::resize(cropImg, cropImg, cv::Size(200,700));
 				cv::imshow("Cropped", cropImg);
 				cv::moveWindow("Cropped", 1600, 0);
 
@@ -251,9 +203,6 @@ int main(int argc, char **argv) {
 					//Bounding Box Center
 					cv::Point center = cv::Point(bounding_rect.x + (bounding_rect.width / 2), bounding_rect.y + (bounding_rect.height / 2));
 
-					// print it:
-					//std::cout << "Center point is at: " << center.x << " " << center.y << std::endl;
-
 					cv::circle(image2, center, 20, cv::Scalar(0, 0, 255), -1, 8, 0);
 
 					int x_int = (bounding_rect.x + (bounding_rect.width / 2));
@@ -265,19 +214,6 @@ int main(int argc, char **argv) {
 					distSum = distSum + dist;
 
 					heightNumber++;
-
-					/*
-
-					std::cout << std::endl;
-					if (isValidMeasure(dist))
-						std::cout << "Depth at (" << x_int << "," << y_int << ") : " << dist << "m";
-					else {
-						std::string depth_status;
-						if (dist == TOO_FAR) depth_status = ("Depth is too far.");
-						else if (dist == TOO_CLOSE) depth_status = ("Depth is too close.");
-						else depth_status = ("Depth not available");
-						std::cout << depth_status;
-					}*/
 				}
 
 
@@ -372,7 +308,7 @@ int main(int argc, char **argv) {
 					cv::FileStorage fs_receive("Histogram_Means.txt", cv::FileStorage::READ);
 					fs_receive["Smallest Distance"] >>  receivedDistance;
 
-					std::cout << " Shortest distance" << receivedDistance << std::endl;
+					std::cout << "Shortest distance: " << receivedDistance << std::endl;
 
 					//col_Vec_receive = (int) fs_receive["Means"];
 
@@ -383,35 +319,6 @@ int main(int argc, char **argv) {
 					std::cout << "Waiting for data" << distMean << std::endl;
 				}
 			}
-
-	
-			
-
-			/*cv::SimpleBlobDetector::Params params;
-			//params.minDistBetweenBlobs = 10.0;  // minimum 10 pixels between blobs
-			//	params.filterByArea = true;         // filter my blobs by area of blob
-			//params.minArea = 20;              // min 20 pixels squared
-			//params.maxArea = 500.0;             // max 500 pixels squared
-			cv::Ptr<cv::SimpleBlobDetector> detector = cv::SimpleBlobDetector::create(params);
-			std::vector<cv::KeyPoint> myBlobs;
-			detector->detect(fgmaskMOG2, myBlobs);
-			*/
-
-
-			/*cv::Mat imWithKeypoints;
-			cv::drawKeypoints(fgmaskMOG2, myBlobs, imWithKeypoints, cv::Scalar(0, 0, 255),cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-			imshow("blobs", imWithKeypoints);*/
-
-			//cv::inRange(fgmaskMOG2, cv::Scalar(0, 0, 0), cv::Scalar(0, 255, 255), image_ocv);
-
-			//get the frame number and write it on the current frame
-			std::stringstream ss;
-			rectangle(image_ocv_display, cv::Point(10, 2), cv::Point(100, 20),
-				cv::Scalar(255, 255, 255), -1);
-			//ss << zed.get(cv::CAP_PROP_POS_FRAMES);
-			std::string frameNumberString = ss.str();
-			putText(image_ocv_display, frameNumberString.c_str(), cv::Point(15, 15),
-				cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
 
 			//show the current frame and the fg masks
 			cv::resize(image2, contour_display, displaySize);
@@ -426,6 +333,7 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
+/*
 //MouseCallback
 static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, void * param) {
 	if (event == CV_EVENT_LBUTTONDOWN) {
@@ -448,7 +356,7 @@ static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, v
 		}
 		std::cout << std::endl;
 	}
-}
+}*/
 
 //Mat Conversion
 cv::Mat slMat2cvMat(sl::Mat& input) {
