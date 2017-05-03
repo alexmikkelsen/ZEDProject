@@ -1,20 +1,20 @@
-//#include <iostream>
+#include <iostream>
 #include <sl/Camera.hpp>
-//#include <opencv2/opencv.hpp>
-//#include <sl/Core.hpp>
-//#include <sl/defines.hpp>
-//#include "opencv2/video.hpp"
-//#include "opencv2/video/background_segm.hpp"
-//#include <opencv2/imgproc.hpp>
-//#include "opencv2/imgcodecs.hpp"
-//#include "opencv2/highgui.hpp"
-//#include <stdio.h>
-//#include <math.h>
-//#include <ctime>
-//#include <chrono>
+#include <opencv2/opencv.hpp>
+#include <sl/Core.hpp>
+#include <sl/defines.hpp>
+#include "opencv2/video.hpp"
+#include "opencv2/video/background_segm.hpp"
+#include <opencv2/imgproc.hpp>
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+#include <stdio.h>
+#include <math.h>
+#include <ctime>
+#include <chrono>
 
 using namespace sl;
-/*
+
 typedef struct mouseOCVStruct {
 	Mat depth;
 	cv::Size _resize;
@@ -23,7 +23,7 @@ typedef struct mouseOCVStruct {
 mouseOCV mouseStruct;
 
 static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, void * param);
-*/
+
 
 cv::Mat slMat2cvMat(sl::Mat& input);
 
@@ -35,8 +35,10 @@ bool hasPicture = false;
 float distMean = 0;
 float smallestDistance = 0;
 float receivedDistance = 0;
+float dist;
 
-cv::Ptr<cv::BackgroundSubtractor> pMOG2;
+cv::Ptr<cv::BackgroundSubtractorMOG2> pMOG2;
+
 
 int main(int argc, char **argv) {
 
@@ -49,9 +51,10 @@ int main(int argc, char **argv) {
 
 	// Set configuration parameters
 	InitParameters init_params;
-	init_params.camera_resolution = RESOLUTION_HD720;
+	init_params.camera_resolution = RESOLUTION_HD1080;
 	init_params.depth_mode = DEPTH_MODE_PERFORMANCE;
 	init_params.coordinate_units = sl::UNIT_METER;
+	init_params.camera_fps = 15;
 	/*
 	init_params.camera_fps = 0;
 	init_params.coordinate_system = COORDINATE_SYSTEM_IMAGE;
@@ -65,14 +68,18 @@ int main(int argc, char **argv) {
 	// Open the camera
 	ERROR_CODE err = zed.open(init_params);
 	if (err != SUCCESS) {
-		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/newestsvo.svo"), false;
-		init_params.svo_real_time_mode = true;
+		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/without.svo"), false;
+		init_params.svo_real_time_mode = false;
 		ERROR_CODE err = zed.open(init_params);
 	}
-
-	zed.setCameraSettings(CAMERA_SETTINGS_EXPOSURE, 80, false);
-	zed.setCameraSettings(CAMERA_SETTINGS_GAIN, 80, false);
-
+	zed.setCameraSettings(CAMERA_SETTINGS_SATURATION, 4, false);
+	zed.setCameraSettings(CAMERA_SETTINGS_WHITEBALANCE, 2800, false);
+	zed.setCameraSettings(CAMERA_SETTINGS_HUE, 0, false);
+	zed.setCameraSettings(CAMERA_SETTINGS_CONTRAST, 4, false);
+	zed.setCameraSettings(CAMERA_SETTINGS_EXPOSURE, 83, false);
+	zed.setCameraSettings(CAMERA_SETTINGS_GAIN, 29, false);
+	zed.setCameraSettings(CAMERA_SETTINGS_BRIGHTNESS, 6, false);
+	
 	// Set runtime parameters after opening the camera
 	RuntimeParameters runtime_parameters;
 	runtime_parameters.sensing_mode = SENSING_MODE_STANDARD; // Use STANDARD sensing mode
@@ -96,13 +103,14 @@ int main(int argc, char **argv) {
 	cv::Mat contour_display(displaySize, CV_8UC4);
 	cv::Mat ycc_display(displaySize, CV_8UC4);
 
-	pMOG2 = cv::createBackgroundSubtractorMOG2(); //MOG2 approach
-
-	/*
+	
+	pMOG2 = cv::createBackgroundSubtractorMOG2(2000,20,true); //MOG2 approach
+	//cv::BackgroundSubtractorMOG2::setDetectShadows(false);
+	
 	// Mouse callback initialization 
 	mouseStruct.depth.alloc(image_size, MAT_TYPE_32F_C1);
 	mouseStruct._resize = displaySize;
-	*/
+	
 	// Give a name to OpenCV Windows
 	cv::namedWindow("Depth", cv::WINDOW_AUTOSIZE);
 
@@ -140,8 +148,13 @@ int main(int argc, char **argv) {
 			cv::moveWindow("YCC", 0, 500);
 
 			//Apply background subtraction
-			pMOG2->apply(image_ocv, fgmaskMOG2);
+			pMOG2->apply(image2, fgmaskMOG2);
+			
+			
+			cv::threshold(fgmaskMOG2, fgmaskMOG2, 250, 255,CV_THRESH_BINARY);
+			
 
+			
 			//Closing
 			cv::Mat element = cv::Mat::ones(10, 10, CV_8UC1); //Kernel
 			cv::erode(fgmaskMOG2, fgmaskMOG2, element);
@@ -150,8 +163,8 @@ int main(int argc, char **argv) {
 			//opening
 			cv::dilate(fgmaskMOG2, fgmaskMOG2, element);
 			cv::erode(fgmaskMOG2, fgmaskMOG2, element);
-
 			//imshow("Segmentation", fgmaskMOG2);
+			
 
 			std::vector<std::vector<cv::Point>> contours;
 			std::vector<cv::Vec4i> hierarchy;
@@ -160,7 +173,10 @@ int main(int argc, char **argv) {
 			int largest_area, largest_contour_index = 0;
 			cv::Rect bounding_rect;
 
+
 			cv::findContours(fgmaskMOG2, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+			
+
 
 			for (int i = 0; i < contours.size(); i++) {
 				double a = cv::contourArea(contours[i], false);
@@ -173,9 +189,9 @@ int main(int argc, char **argv) {
 			}
 
 			for (int j = 0; j < contours.size(); j++) {
-				//cv::drawContours(image2, contours, largest_contour_index, CV_RGB(255, 0, 0), 6, 8, hierarchy, 0, cv::Point());
+				//cv::drawContours(image2, contours, j, CV_RGB(255, 0, 0), 6, 8, hierarchy, 0, cv::Point());
 				//cv::drawContours(image2, hull, (int)j, CV_RGB(255, 100, 0), 2, 8, hierarchy, 0, cv::Point());
-				bounding_rect = cv::boundingRect(contours[largest_contour_index]);
+				bounding_rect = cv::boundingRect(contours[j]);
 				cv::rectangle(image2, bounding_rect, cv::Scalar(100, 255, 0), 8);
 			}
 			
@@ -186,16 +202,21 @@ int main(int argc, char **argv) {
 			bool accumulate = false;
 			cv::Mat b_hist, g_hist, r_hist;
 
-			if (bounding_rect.width > 100 && bounding_rect.height > 400) {
+			if (bounding_rect.width > 50 && bounding_rect.height > 50) {
 				cv::Mat cropImg = image_ocv(bounding_rect);
-				cv::imshow("Cropped", cropImg);
-				cv::moveWindow("Cropped", 1600, 0);
+				
+				
 
-
-				if (bounding_rect.x > 400 && bounding_rect.x < 600) {
-
+				//cvWaitKey(0);
+				if (bounding_rect.x > 870 && bounding_rect.x < 930) {
+					cv::imshow("Cropped", cropImg);
+				cv::moveWindow("Cropped", 800, 0);
 					//Saves picture
 					if (hasPicture == false) {
+
+						cropImg = image2(bounding_rect);
+						
+
 						cv::imwrite("C:/GitHub/ZEDProject/build/cropImg.jpg", cropImg);
 						hasPicture = true;
 					}
@@ -208,19 +229,18 @@ int main(int argc, char **argv) {
 					int x_int = (bounding_rect.x + (bounding_rect.width / 2));
 					int y_int = (bounding_rect.y + (bounding_rect.height / 2));
 
-					float dist;
 					depth.getValue(x_int, y_int, &dist);
 
 					distSum = distSum + dist;
 
 					heightNumber++;
 				}
+				
+				
+				//dist0Mean = distSum / heightNumber;
 
-
-				distMean = distSum / heightNumber;
-
-				if (distMean > 0) {
-					std::cout << "Depth: " << distMean << std::endl;
+				if (dist > 0) {
+					std::cout << "Depth: " << dist << std::endl;
 				}
 
 				std::vector<cv::Mat> bgr_planes;
@@ -275,11 +295,11 @@ int main(int argc, char **argv) {
 
 				cv::Vec4d col_Vec1{ 21.0,14.0,22.0, 2.0 }; //high_exposure_w_scarf
 				cv::Vec4d col_Vec2{ 48,5.0,9.0, 1.64 }; //newestsvo2
-				cv::Vec4d feature_Vec{ (double)blue_mean,(double)green_mean,(double)red_mean, (double)distMean };
+				cv::Vec4d feature_Vec{ (double)blue_mean,(double)green_mean,(double)red_mean, (double)dist };
 				cv::Vec4d col_Vec_receive;
 
 
-				if (distMean > 0.2) {
+				if (dist > 0.2) {
 					int high_exposure_w_scarf = cv::norm(col_Vec1, feature_Vec);
 					int newestsvo2 = cv::norm(col_Vec2, feature_Vec);
 					if (high_exposure_w_scarf < newestsvo2) {
@@ -316,7 +336,7 @@ int main(int argc, char **argv) {
 					
 				}
 				else {
-					std::cout << "Waiting for data" << distMean << std::endl;
+				//	std::cout << "Waiting for data" << dist << std::endl;
 				}
 			}
 
@@ -333,7 +353,7 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-/*
+
 //MouseCallback
 static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, void * param) {
 	if (event == CV_EVENT_LBUTTONDOWN) {
@@ -356,7 +376,7 @@ static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, v
 		}
 		std::cout << std::endl;
 	}
-}*/
+}
 
 //Mat Conversion
 cv::Mat slMat2cvMat(sl::Mat& input) {
@@ -374,7 +394,7 @@ cv::Mat slMat2cvMat(sl::Mat& input) {
 	default: break;
 	}
 
-	// cv::Mat data requires a uchar* pointer. Therefore, we get the uchar1 pointer from sl::Mat (getPtr<T>())
+	 //cv::Mat data requires a uchar* pointer. Therefore, we get the uchar1 pointer from sl::Mat (getPtr<T>())
 	//cv::Mat and sl::Mat will share the same memory pointer
 	return cv::Mat(input.getHeight(), input.getWidth(), cv_type, input.getPtr<sl::uchar1>(MEM_CPU));
 }
