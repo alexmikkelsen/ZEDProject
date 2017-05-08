@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 
 	// Set configuration parameters
 	InitParameters init_params;
-	init_params.camera_resolution = RESOLUTION_HD1080;
+	init_params.camera_resolution = RESOLUTION_HD2K;
 	init_params.depth_mode = DEPTH_MODE_PERFORMANCE;
 	init_params.coordinate_units = sl::UNIT_METER;
 	init_params.camera_fps = 15;
@@ -68,8 +68,8 @@ int main(int argc, char **argv) {
 	// Open the camera
 	ERROR_CODE err = zed.open(init_params);
 	if (err != SUCCESS) {
-		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/without.svo"), false;
-		init_params.svo_real_time_mode = false;
+		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/part15.svo"), false;
+		init_params.svo_real_time_mode = true;
 		ERROR_CODE err = zed.open(init_params);
 	}
 	zed.setCameraSettings(CAMERA_SETTINGS_SATURATION, 4, false);
@@ -125,6 +125,8 @@ int main(int argc, char **argv) {
 		// Grab and display image and depth 
 		if (zed.grab(runtime_parameters) == SUCCESS) {
 
+			
+
 			zed.retrieveImage(image_zed, VIEW_LEFT); // Retrieve the left image
 			zed.retrieveImage(depth_image_zed, VIEW_DEPTH); //Retrieve the depth view (image)
 			zed.retrieveMeasure(depth, MEASURE_DEPTH); // Retrieve the depth measure (32bits)
@@ -138,6 +140,8 @@ int main(int argc, char **argv) {
 			cv::resize(depth_image_ocv, depth_image_ocv_display, displaySize);
 			imshow("Depth", depth_image_ocv_display);
 			cv::moveWindow("Depth", 0, 0);
+
+		image2.convertTo(image2, -1, 1, -30);
 
 			//Conversion to YCC
 			cv::cvtColor(image2, image_ocv, CV_BGR2YCrCb);
@@ -163,7 +167,7 @@ int main(int argc, char **argv) {
 			//opening
 			cv::dilate(fgmaskMOG2, fgmaskMOG2, element);
 			cv::erode(fgmaskMOG2, fgmaskMOG2, element);
-			//imshow("Segmentation", fgmaskMOG2);
+			imshow("Segmentation", fgmaskMOG2);
 			
 
 			std::vector<std::vector<cv::Point>> contours;
@@ -208,7 +212,7 @@ int main(int argc, char **argv) {
 				
 
 				//cvWaitKey(0);
-				if (bounding_rect.x > 870 && bounding_rect.x < 930) {
+				if (bounding_rect.x > 750 && bounding_rect.x < 1250 && bounding_rect.y > 50) {
 					cv::imshow("Cropped", cropImg);
 				cv::moveWindow("Cropped", 800, 0);
 					//Saves picture
