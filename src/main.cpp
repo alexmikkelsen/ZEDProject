@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
 			imshow("Depth", depth_image_ocv_display);
 			cv::moveWindow("Depth", 0, 0);
 
-			image2.convertTo(image2, -1, 1, -30);
+			image2.convertTo(image2, -1, 1.7, -30);
 
 			//Conversion to YCC
 			cv::cvtColor(image2, image_ocv, CV_BGR2YCrCb);
@@ -210,6 +210,7 @@ int main(int argc, char **argv) {
 
 				//cvWaitKey(0);
 				if (bounding_rect.x > 700 && bounding_rect.x < 1100 && bounding_rect.y > 50) {
+
 					foundContour = true;
 					isWithinBox = true;
 					cv::imshow("Cropped", cropImg);
@@ -221,8 +222,7 @@ int main(int argc, char **argv) {
 
 
 						cv::imwrite("C:/GitHub/ZEDProject/build/cropImg.jpg", cropImg);
-						hasPicture = true;
-
+						//hasPicture = true;
 					}
 
 					//Bounding Box Center
@@ -243,9 +243,11 @@ int main(int argc, char **argv) {
 				else {
 					isWithinBox = false;
 					isNextProbe = false;
+					foundContour = false;
+					hasPicture = false;
 				}
 
-				if (distMean > 0 && !std::isnan(distMean) && isWithinBox == true) {
+				if (distMean > 0 && !std::isnan(distMean)) {
 					std::cout << "Depth: " << distMean << std::endl;
 					cv::waitKey(20);
 				}
@@ -339,7 +341,7 @@ int main(int argc, char **argv) {
 					fs_receive.release();
 				}
 
-				if (foundContour == true) {
+				if (foundContour == true && hasPicture == false && !std::isnan(distMean)) {
 
 					std::string probeString = std::string("Probe") + std::to_string(k) + std::string(".txt");
 
@@ -359,6 +361,7 @@ int main(int argc, char **argv) {
 
 					k++;
 					foundContour = false;
+					hasPicture = true;
 				}
 
 				if (dist > 0.8) {
