@@ -82,15 +82,12 @@ C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(476): warning C4251: 'sl::S
   C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(343): note: see declaration of 'std::pair<float,float>'
 C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(558): warning C4251: 'sl::Pose::pose_data': class 'sl::Transform' needs to have dll-interface to be used by clients of class 'sl::Pose'
   C:\Program Files (x86)\ZED SDK\include\sl/Core.hpp(859): note: see declaration of 'sl::Transform'
-C:\GitHub\ZEDProject\src\main.cpp(188): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(307): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(308): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(311): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(315): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(50): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\GitHub\ZEDProject\src\main.cpp(187): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(331): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(310): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\time.h(505): note: see declaration of 'localtime'
-C:\GitHub\ZEDProject\src\main.cpp(365): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(366): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(403): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-c:\github\zedproject\src\main.cpp(187): warning C4700: uninitialized local variable 'largest_area' used
+C:\GitHub\ZEDProject\src\main.cpp(409): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(410): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(447): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\github\zedproject\src\main.cpp(186): warning C4700: uninitialized local variable 'largest_area' used
   ZED_PROJECT.vcxproj -> C:\GitHub\ZEDProject\build\Release\ZED_PROJECT.exe
