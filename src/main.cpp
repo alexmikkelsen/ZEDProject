@@ -44,6 +44,9 @@ float dist;
 float receivedRed, receivedGreen, receivedBlue, receivedDepth;
 double finalDistance;
 int k = 1;
+int l = 0;
+int gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9;
+int r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9, r_hour, r_min, r_sec;
 
 cv::Ptr<cv::BackgroundSubtractorMOG2> pMOG2;
 
@@ -72,7 +75,7 @@ int main(int argc, char **argv) {
 	// Open the camera
 	ERROR_CODE err = zed.open(init_params);
 	if (err != SUCCESS) {
-		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/part1.svo"), false;
+		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/Dan.svo"), false;
 		init_params.svo_real_time_mode = false;
 		ERROR_CODE err = zed.open(init_params);
 	}
@@ -145,7 +148,7 @@ int main(int argc, char **argv) {
 			imshow("Depth", depth_image_ocv_display);
 			cv::moveWindow("Depth", 0, 0);
 
-			image2.convertTo(image2, -1, 1.7, -30);
+			image2.convertTo(image2, -1, 1.4, -30);
 
 			//Conversion to YCC
 			cv::cvtColor(image2, image_ocv, CV_BGR2YCrCb);
@@ -204,7 +207,7 @@ int main(int argc, char **argv) {
 			bool accumulate = false;
 			cv::Mat b_hist, g_hist, r_hist;
 
-			if (bounding_rect.width > 50 && bounding_rect.height > 50) {
+			if (bounding_rect.width > 200 && bounding_rect.height > 200 && bounding_rect.width < 600 && bounding_rect.height < 600) {
 				cv::Mat cropImg = image_ocv(bounding_rect);
 
 
@@ -216,7 +219,7 @@ int main(int argc, char **argv) {
 					cv::imshow("Cropped", cropImg);
 					cv::moveWindow("Cropped", 800, 0);
 					//Saves picture
-					if (hasPicture == false) {
+					if (hasPicture == false && l > 0) {
 
 						cropImg = image2(bounding_rect);
 
@@ -224,6 +227,7 @@ int main(int argc, char **argv) {
 						cv::imwrite("C:/GitHub/ZEDProject/build/cropImg.jpg", cropImg);
 						//hasPicture = true;
 					}
+					l++;
 
 					//Bounding Box Center
 					cv::Point center = cv::Point(bounding_rect.x + (bounding_rect.width / 2), bounding_rect.y + (bounding_rect.height / 2));
@@ -239,136 +243,175 @@ int main(int argc, char **argv) {
 					distMean = distSum / heightNumber;
 					distMean = std::floorf(distMean * 100) / 100;
 					heightNumber++;
-				}
-				else {
-					isWithinBox = false;
-					isNextProbe = false;
-					foundContour = false;
-					hasPicture = false;
-				}
-
-				if (distMean > 0 && !std::isnan(distMean)) {
-					std::cout << "Depth: " << distMean << std::endl;
-					cv::waitKey(20);
-				}
-
-				std::vector<cv::Mat> bgr_planes;
-				split(cropImg, bgr_planes);
-				cv::Mat blue = bgr_planes[0];
-				cv::Mat green = bgr_planes[1];
-				cv::Mat red = bgr_planes[2];
-
-				/// Compute the histograms:
-				cv::calcHist(&blue, 1, 0, cv::Mat(), b_hist, 1, &histSize, &histRange, uniform, accumulate);
-				cv::calcHist(&green, 1, 0, cv::Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate);
-				cv::calcHist(&red, 1, 0, cv::Mat(), r_hist, 1, &histSize, &histRange, uniform, accumulate);
-
-				// Draw the histograms for B, G and R
-				int hist_w = 512; int hist_h = 400;
-				int bin_w = cvRound((double)hist_w / histSize);
 
 
-				cv::Mat histImage(hist_h, hist_w, CV_8UC3, cv::Scalar(0, 0, 0));
 
-				/// Normalize the result to [ 0, histImage.rows ]
-				cv::normalize(b_hist, b_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
-				cv::normalize(g_hist, g_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
-				cv::normalize(r_hist, r_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
+					if (dist > 0 && !std::isnan(dist)) {
+						std::cout << "Depth: " << dist << std::endl;
+						cv::waitKey(20);
+					}
 
-				float blue_mean, green_mean, red_mean, colorNumber = 0;
+					std::vector<cv::Mat> bgr_planes;
+					split(cropImg, bgr_planes);
+					cv::Mat blue = bgr_planes[0];
+					cv::Mat green = bgr_planes[1];
+					cv::Mat red = bgr_planes[2];
 
-				for (int i = 1; i < histSize; i++)
-				{
-					line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(b_hist.at<float>(i - 1))),
-						cv::Point(bin_w*(i), hist_h - cvRound(b_hist.at<float>(i))),
-						cv::Scalar(255, 0, 0), 2, 8, 0);
 
-					blue_mean = blue_mean + cvRound(b_hist.at<float>(i - 1));
+					/// Compute the histograms:
+					cv::calcHist(&blue, 1, 0, cv::Mat(), b_hist, 1, &histSize, &histRange, uniform, accumulate);
+					cv::calcHist(&green, 1, 0, cv::Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate);
+					cv::calcHist(&red, 1, 0, cv::Mat(), r_hist, 1, &histSize, &histRange, uniform, accumulate);
 
-					line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(g_hist.at<float>(i - 1))),
-						cv::Point(bin_w*(i), hist_h - cvRound(g_hist.at<float>(i))),
-						cv::Scalar(0, 255, 0), 2, 8, 0);
+					// Draw the histograms for B, G and R
+					int hist_w = 512; int hist_h = 400;
+					int bin_w = cvRound((double)hist_w / histSize);
 
-					green_mean = green_mean + cvRound(g_hist.at<float>(i - 1));
 
-					line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(r_hist.at<float>(i - 1))),
-						cv::Point(bin_w*(i), hist_h - cvRound(r_hist.at<float>(i))),
-						cv::Scalar(0, 0, 255), 2, 8, 0);
+					cv::Mat histImage(hist_h, hist_w, CV_8UC3, cv::Scalar(0, 0, 0));
 
-					red_mean = red_mean + cvRound(r_hist.at<float>(i - 1));
-					colorNumber++;
-				}
-				blue_mean = blue_mean / colorNumber;
-				green_mean = green_mean / colorNumber;
-				red_mean = red_mean / colorNumber;
+					/// Normalize the result to [ 0, histImage.rows ]
+					cv::normalize(b_hist, b_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
+					cv::normalize(g_hist, g_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
+					cv::normalize(r_hist, r_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
 
-				cv::Vec4d feature_Vec{ (double)blue_mean,(double)green_mean,(double)red_mean, (double)dist };
-				cv::Vec4d col_Vec_receive;
-				cv::Vec4d receivedVector;
+					float blue_mean, green_mean, red_mean, colorNumber = 0;
 
-				time_t now = time(0);
+					for (int i = 1; i < histSize; i++)
+					{
+						line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(b_hist.at<float>(i - 1))),
+							cv::Point(bin_w*(i), hist_h - cvRound(b_hist.at<float>(i))),
+							cv::Scalar(255, 0, 0), 2, 8, 0);
 
-				tm *ltm = localtime(&now);
-				int hour = ltm->tm_hour;
-				int min = ltm->tm_min;
-				int sec = ltm->tm_sec;
+						blue_mean = blue_mean + cvRound(b_hist.at<float>(i - 1));
 
-				for (int i = 1; i < 10; i++) {
-					std::string galleryString = std::string("Gallery") + std::to_string(i) + std::string(".txt");
+						line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(g_hist.at<float>(i - 1))),
+							cv::Point(bin_w*(i), hist_h - cvRound(g_hist.at<float>(i))),
+							cv::Scalar(0, 255, 0), 2, 8, 0);
 
-					cv::FileStorage fs_receive(galleryString, cv::FileStorage::READ);
-					fs_receive["Red"] >> receivedRed;
-					fs_receive["Green"] >> receivedGreen;
-					fs_receive["Blue"] >> receivedBlue;
-					fs_receive["Depth"] >> receivedDepth;
+						green_mean = green_mean + cvRound(g_hist.at<float>(i - 1));
 
-					receivedVector = { (double)receivedBlue, (double)receivedGreen, (double)receivedRed, (double)receivedDepth };
+						line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(r_hist.at<float>(i - 1))),
+							cv::Point(bin_w*(i), hist_h - cvRound(r_hist.at<float>(i))),
+							cv::Scalar(0, 0, 255), 2, 8, 0);
 
-					if (!std::isnan(dist) && isWithinBox == true) {
-						finalDistance = cv::norm(receivedVector, feature_Vec);
+						red_mean = red_mean + cvRound(r_hist.at<float>(i - 1));
+						colorNumber++;
+					}
+					blue_mean = blue_mean / colorNumber;
+					green_mean = green_mean / colorNumber;
+					red_mean = red_mean / colorNumber;
 
-						if (finalDistance < smallestDistance) {
-							smallestDistance = finalDistance;
-							smallestDistance_index = (float)i;
+					cv::Vec4d feature_Vec{ (double)blue_mean,(double)green_mean,(double)red_mean, (double)dist };
+					cv::Vec4d col_Vec_receive;
+					cv::Vec4d receivedVector;
+
+					time_t now = time(0);
+
+					tm *ltm = localtime(&now);
+					int hour = ltm->tm_hour;
+					int min = ltm->tm_min;
+					int sec = ltm->tm_sec;
+
+					for (int i = 1; i < 10; i++) {
+						std::string galleryString = std::string("Gallery") + std::to_string(i) + std::string(".txt");
+
+						cv::FileStorage fs_receive(galleryString, cv::FileStorage::READ);
+						fs_receive["Red"] >> receivedRed;
+						fs_receive["Green"] >> receivedGreen;
+						fs_receive["Blue"] >> receivedBlue;
+						fs_receive["Depth"] >> receivedDepth;
+						fs_receive["Gallery1"] >> r_gal1;
+						fs_receive["Gallery2"] >> r_gal2;
+						fs_receive["Gallery3"] >> r_gal3;
+						fs_receive["Gallery4"] >> r_gal4;
+						fs_receive["Gallery5"] >> r_gal5;
+						fs_receive["Gallery6"] >> r_gal6;
+						fs_receive["Gallery7"] >> r_gal7;
+						fs_receive["Gallery8"] >> r_gal8;
+						fs_receive["Gallery9"] >> r_gal9;
+
+						receivedVector = { (double)receivedBlue, (double)receivedGreen, (double)receivedRed, (double)receivedDepth };
+						float receivedArray[9] = { (int)r_gal1,(int)r_gal2,(int)r_gal3,(int)r_gal4,(int)r_gal5,(int)r_gal6,(int)r_gal7,(int)r_gal8,(int)r_gal9 };
+
+
+						if (!std::isnan(dist) && isWithinBox == true) {
+							finalDistance = cv::norm(receivedVector, feature_Vec);
+
+							if (i == 1) {
+								gal1 = finalDistance;
+							}
+							else if (i == 2) {
+								gal2 = finalDistance;
+							}
+							else if (i == 3) {
+								gal3 = finalDistance;
+							}
+							else if (i == 4) {
+								gal4 = finalDistance;
+							}
+							else if (i == 5) {
+								gal5 = finalDistance;
+							}
+							else if (i == 6) {
+								gal6 = finalDistance;
+							}
+							else if (i == 7) {
+								gal7 = finalDistance;
+							}
+							else if (i == 8) {
+								gal8 = finalDistance;
+							}
+							else if (i == 9) {
+								gal9 = finalDistance;
+							}
+
+
+							if (finalDistance < smallestDistance) {
+								smallestDistance = finalDistance;
+								smallestDistance_index = (float)i;
+							}
+
 						}
+
+
+						//	std::cout << "Received Mean: " << receivedRed << std::endl;
+
+							//col_Vec_receive = (int) fs_receive["Means"];
+
+						fs_receive.release();
+					}
+					float galArray[9] = { gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9 };
+					cv::Mat gals = cv::Mat(1,9,CV_32F,galArray);
+
+					for (int i = 1; i < 10; i++) {
+						std::string probeString = std::string("Probe") + std::to_string(i) + std::string(".txt");
+						cv::FileStorage fs_receive(probeString, cv::FileStorage::READ);
+
+						fs_receive["Hour"] >> r_hour;
+						fs_receive["Minute"] >> r_min;
+						fs_receive["Seconds"] >> r_sec;
+						fs_receive["Gallery1"] >> r_gal1;
+						fs_receive["Gallery2"] >> r_gal2;
+						fs_receive["Gallery3"] >> r_gal3;
+						fs_receive["Gallery4"] >> r_gal4;
+						fs_receive["Gallery5"] >> r_gal5;
+						fs_receive["Gallery6"] >> r_gal6;
+						fs_receive["Gallery7"] >> r_gal7;
+						fs_receive["Gallery8"] >> r_gal8;
+						fs_receive["Gallery9"] >> r_gal9;
 
 					}
 
-					//	std::cout << "Received Mean: " << receivedRed << std::endl;
+					float r_galArray[9] = { r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9 };
 
-						//col_Vec_receive = (int) fs_receive["Means"];
+					int probeDistance = cv::norm(galArray, r_galArray);
 
-					fs_receive.release();
-				}
+					if (foundContour == true && hasPicture == false && !std::isnan(dist)) {
 
-				if (foundContour == true && hasPicture == false && !std::isnan(distMean)) {
+						std::string probeString = std::string("Probe") + std::to_string(k) + std::string(".txt");
 
-					std::string probeString = std::string("Probe") + std::to_string(k) + std::string(".txt");
-
-					cv::FileStorage fs(probeString, cv::FileStorage::WRITE);
-					fs << "Hour" << hour;
-					fs << "Minute" << min;
-					fs << "Seconds" << sec;
-					//fs << "Means " << feature_Vec;
-					fs << "Blue" << (int)blue_mean;
-					fs << "Green" << (int)green_mean;
-					fs << "Red" << (int)red_mean;
-					fs << "Depth" << distMean;
-					//	fs << "Shortest Distance " << smallestDistance;
-
-					fs.release();
-					imshow("calcHist demo", histImage);
-
-					k++;
-					foundContour = false;
-					hasPicture = true;
-				}
-
-				if (dist > 0.8) {
-					std::cout << "Euclidean Distance " << std::to_string(smallestDistance_index) << ": " << smallestDistance << std::endl;
-
-					if (!std::isnan(distMean)) {
-						cv::FileStorage fs("Histogram_Means.txt", cv::FileStorage::WRITE);
+						cv::FileStorage fs(probeString, cv::FileStorage::WRITE);
 						fs << "Hour" << hour;
 						fs << "Minute" << min;
 						fs << "Seconds" << sec;
@@ -376,16 +419,71 @@ int main(int argc, char **argv) {
 						fs << "Blue" << (int)blue_mean;
 						fs << "Green" << (int)green_mean;
 						fs << "Red" << (int)red_mean;
-						fs << "Depth" << distMean;
+						fs << "Depth" << dist;
+						fs << "Closest to" << smallestDistance_index;
+						fs << "Distance to gallery" << smallestDistance;
 						//	fs << "Shortest Distance " << smallestDistance;
+
+						fs << "Gallery1" << gal1;
+						fs << "Gallery2" << gal2;
+						fs << "Gallery3" << gal3;
+						fs << "Gallery4" << gal4;
+						fs << "Gallery5" << gal5;
+						fs << "Gallery6" << gal6;
+						fs << "Gallery7" << gal7;
+						fs << "Gallery8" << gal8;
+						fs << "Gallery9" << gal9;
 
 						fs.release();
 						imshow("calcHist demo", histImage);
 
+						k++;
+						foundContour = false;
+						hasPicture = true;
 					}
+
+					if (dist > 0.8) {
+						std::cout << "Euclidean Distance " << std::to_string(smallestDistance_index) << ": " << smallestDistance << std::endl;
+
+						if (!std::isnan(dist)) {
+							cv::FileStorage fs("Histogram_Means.txt", cv::FileStorage::WRITE);
+							fs << "Hour" << hour;
+							fs << "Minute" << min;
+							fs << "Seconds" << sec;
+							//fs << "Means " << feature_Vec;
+							fs << "Blue" << (int)blue_mean;
+							fs << "Green" << (int)green_mean;
+							fs << "Red" << (int)red_mean;
+							fs << "Depth" << dist;
+							fs << "Closest to" << smallestDistance_index;
+							fs << "Distance to gallery" << smallestDistance;
+							fs << "Gallery1" << gal1;
+							fs << "Gallery2" << gal2;
+							fs << "Gallery3" << gal3;
+							fs << "Gallery4" << gal4;
+							fs << "Gallery5" << gal5;
+							fs << "Gallery6" << gal6;
+							fs << "Gallery7" << gal7;
+							fs << "Gallery8" << gal8;
+							fs << "Gallery9" << gal9;
+						//	fs << "Gallery Matrix" << gals;
+							//	fs << "Shortest Distance " << smallestDistance;
+
+							fs.release();
+							imshow("calcHist demo", histImage);
+
+						}
+					}
+					else {
+						//	std::cout << "Waiting for data" << dist << std::endl;
+					}
+
 				}
 				else {
-					//	std::cout << "Waiting for data" << dist << std::endl;
+					isWithinBox = false;
+					isNextProbe = false;
+					foundContour = false;
+					hasPicture = false;
 				}
 			}
 
