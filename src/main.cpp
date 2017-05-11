@@ -411,7 +411,7 @@ int main(int argc, char **argv) {
 
 					if (foundContour == true && hasPicture == false && !std::isnan(dist)&& err2 == SUCCESS) {
 
-						std::string probeString = std::string("Probe") + std::to_string(k) + std::string(".txt");
+						std::string probeString = std::string("ProbeA") + std::to_string(k) + std::string(".txt");
 
 						cv::FileStorage fs(probeString, cv::FileStorage::WRITE);
 						fs << "Hour" << hour;
@@ -437,6 +437,8 @@ int main(int argc, char **argv) {
 
 						fs.release();
 						imshow("calcHist demo", histImage);
+
+						cv::imwrite("C:/GitHub/ZEDProject/build/cropImgA" + std::to_string(k) + ".jpg", cropImg);
 
 						k++;
 						foundContour = false;
@@ -475,6 +477,9 @@ int main(int argc, char **argv) {
 
 						fs.release();
 						imshow("calcHist demo", histImage);
+
+						cv::imwrite("C:/GitHub/ZEDProject/build/cropImgB" + std::to_string(k) + ".jpg", cropImg);
+
 						k++;
 						foundContour = false;
 						hasPicture = true;
