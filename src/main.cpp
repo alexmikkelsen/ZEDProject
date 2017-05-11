@@ -46,7 +46,11 @@ double finalDistance;
 int k = 1;
 int l = 0;
 int gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9;
-int r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9, r_hour, r_min, r_sec;
+int r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9, r_hour, r_min, r_sec, probeDistance;
+float receivedArray[9];
+float galArray[9] = { gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9 };
+float r_galArray[9] = { r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9 };
+
 
 cv::Ptr<cv::BackgroundSubtractorMOG2> pMOG2;
 
@@ -73,11 +77,12 @@ int main(int argc, char **argv) {
 	*/
 
 	// Open the camera
-	ERROR_CODE err = zed.open(init_params);
-	if (err != SUCCESS) {
-		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/Dan.svo"), false;
+	ERROR_CODE err1 = zed.open(init_params);
+	ERROR_CODE err2;
+	if (err1 != SUCCESS) {
+		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/Allan2.svo"), false;
 		init_params.svo_real_time_mode = false;
-		ERROR_CODE err = zed.open(init_params);
+		 err2 = zed.open(init_params);
 	}
 	zed.setCameraSettings(CAMERA_SETTINGS_SATURATION, 4, false);
 	zed.setCameraSettings(CAMERA_SETTINGS_WHITEBALANCE, 2800, false);
@@ -305,7 +310,7 @@ int main(int argc, char **argv) {
 					cv::Vec4d feature_Vec{ (double)blue_mean,(double)green_mean,(double)red_mean, (double)dist };
 					cv::Vec4d col_Vec_receive;
 					cv::Vec4d receivedVector;
-
+						
 					time_t now = time(0);
 
 					tm *ltm = localtime(&now);
@@ -321,7 +326,7 @@ int main(int argc, char **argv) {
 						fs_receive["Green"] >> receivedGreen;
 						fs_receive["Blue"] >> receivedBlue;
 						fs_receive["Depth"] >> receivedDepth;
-						fs_receive["Gallery1"] >> r_gal1;
+					/*	fs_receive["Gallery1"] >> r_gal1;
 						fs_receive["Gallery2"] >> r_gal2;
 						fs_receive["Gallery3"] >> r_gal3;
 						fs_receive["Gallery4"] >> r_gal4;
@@ -329,10 +334,9 @@ int main(int argc, char **argv) {
 						fs_receive["Gallery6"] >> r_gal6;
 						fs_receive["Gallery7"] >> r_gal7;
 						fs_receive["Gallery8"] >> r_gal8;
-						fs_receive["Gallery9"] >> r_gal9;
+						fs_receive["Gallery9"] >> r_gal9;*/
 
 						receivedVector = { (double)receivedBlue, (double)receivedGreen, (double)receivedRed, (double)receivedDepth };
-						float receivedArray[9] = { (int)r_gal1,(int)r_gal2,(int)r_gal3,(int)r_gal4,(int)r_gal5,(int)r_gal6,(int)r_gal7,(int)r_gal8,(int)r_gal9 };
 
 
 						if (!std::isnan(dist) && isWithinBox == true) {
@@ -381,9 +385,7 @@ int main(int argc, char **argv) {
 
 						fs_receive.release();
 					}
-					float galArray[9] = { gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9 };
-					cv::Mat gals = cv::Mat(1,9,CV_32F,galArray);
-
+										
 					for (int i = 1; i < 10; i++) {
 						std::string probeString = std::string("Probe") + std::to_string(i) + std::string(".txt");
 						cv::FileStorage fs_receive(probeString, cv::FileStorage::READ);
@@ -401,13 +403,13 @@ int main(int argc, char **argv) {
 						fs_receive["Gallery8"] >> r_gal8;
 						fs_receive["Gallery9"] >> r_gal9;
 
+						fs_receive.release();
 					}
+					cv::Mat r_galMat(9, 1, CV_32F, r_galArray);
+					cv::Mat galMat(9, 1, CV_32F, galArray);
+					probeDistance = cv::norm(galMat, r_galMat);
 
-					float r_galArray[9] = { r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9 };
-
-					int probeDistance = cv::norm(galArray, r_galArray);
-
-					if (foundContour == true && hasPicture == false && !std::isnan(dist)) {
+					if (foundContour == true && hasPicture == false && !std::isnan(dist)&& err2 == SUCCESS) {
 
 						std::string probeString = std::string("Probe") + std::to_string(k) + std::string(".txt");
 
@@ -423,7 +425,6 @@ int main(int argc, char **argv) {
 						fs << "Closest to" << smallestDistance_index;
 						fs << "Distance to gallery" << smallestDistance;
 						//	fs << "Shortest Distance " << smallestDistance;
-
 						fs << "Gallery1" << gal1;
 						fs << "Gallery2" << gal2;
 						fs << "Gallery3" << gal3;
@@ -440,43 +441,51 @@ int main(int argc, char **argv) {
 						k++;
 						foundContour = false;
 						hasPicture = true;
+					
+					
+					}
+
+					if (foundContour == true && hasPicture == false && !std::isnan(dist) && err1 == SUCCESS) {
+
+						std::string probeString = std::string("ProbeB") + std::to_string(k) + std::string(".txt");
+
+						cv::FileStorage fs(probeString, cv::FileStorage::WRITE);
+						fs << "Hour" << hour;
+						fs << "Minute" << min;
+						fs << "Seconds" << sec;
+						//fs << "Means " << feature_Vec;
+						fs << "Blue" << (int)blue_mean;
+						fs << "Green" << (int)green_mean;
+						fs << "Red" << (int)red_mean;
+						fs << "Depth" << dist;
+						fs << "Closest to" << smallestDistance_index;
+						fs << "Distance to gallery" << smallestDistance;
+						fs << "Gallery1" << gal1;
+						fs << "Gallery2" << gal2;
+						fs << "Gallery3" << gal3;
+						fs << "Gallery4" << gal4;
+						fs << "Gallery5" << gal5;
+						fs << "Gallery6" << gal6;
+						fs << "Gallery7" << gal7;
+						fs << "Gallery8" << gal8;
+						fs << "Gallery9" << gal9;
+						//	fs << "Gallery Matrix" << gals;
+						//	fs << "Shortest Distance " << smallestDistance;
+						//fs << "ProbeDistance" << probeDistance;
+
+						fs.release();
+						imshow("calcHist demo", histImage);
+						k++;
+						foundContour = false;
+						hasPicture = true;
+
 					}
 
 					if (dist > 0.8) {
 						std::cout << "Euclidean Distance " << std::to_string(smallestDistance_index) << ": " << smallestDistance << std::endl;
 
-						if (!std::isnan(dist)) {
-							cv::FileStorage fs("Histogram_Means.txt", cv::FileStorage::WRITE);
-							fs << "Hour" << hour;
-							fs << "Minute" << min;
-							fs << "Seconds" << sec;
-							//fs << "Means " << feature_Vec;
-							fs << "Blue" << (int)blue_mean;
-							fs << "Green" << (int)green_mean;
-							fs << "Red" << (int)red_mean;
-							fs << "Depth" << dist;
-							fs << "Closest to" << smallestDistance_index;
-							fs << "Distance to gallery" << smallestDistance;
-							fs << "Gallery1" << gal1;
-							fs << "Gallery2" << gal2;
-							fs << "Gallery3" << gal3;
-							fs << "Gallery4" << gal4;
-							fs << "Gallery5" << gal5;
-							fs << "Gallery6" << gal6;
-							fs << "Gallery7" << gal7;
-							fs << "Gallery8" << gal8;
-							fs << "Gallery9" << gal9;
-						//	fs << "Gallery Matrix" << gals;
-							//	fs << "Shortest Distance " << smallestDistance;
-
-							fs.release();
-							imshow("calcHist demo", histImage);
-
-						}
 					}
-					else {
-						//	std::cout << "Waiting for data" << dist << std::endl;
-					}
+					
 
 				}
 				else {
