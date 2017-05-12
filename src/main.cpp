@@ -45,11 +45,12 @@ float receivedRed, receivedGreen, receivedBlue, receivedDepth;
 double finalDistance;
 int k = 1;
 int l = 0;
-int gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9;
+int gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9, probeGalDistanceIndex, probeGalShortestDistance;
 int r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9, r_hour, r_min, r_sec, probeDistance;
 float receivedArray[9];
 float galArray[9] = { gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9 };
 float r_galArray[9] = { r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9 };
+float blue_mean, green_mean, red_mean, colorNumber = 0;
 
 
 cv::Ptr<cv::BackgroundSubtractorMOG2> pMOG2;
@@ -80,7 +81,7 @@ int main(int argc, char **argv) {
 	ERROR_CODE err1 = zed.open(init_params);
 	ERROR_CODE err2;
 	if (err1 != SUCCESS) {
-		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/Allan2.svo"), false;
+		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/Alex.svo"), false;
 		init_params.svo_real_time_mode = false;
 		 err2 = zed.open(init_params);
 	}
@@ -223,16 +224,6 @@ int main(int argc, char **argv) {
 					isWithinBox = true;
 					cv::imshow("Cropped", cropImg);
 					cv::moveWindow("Cropped", 800, 0);
-					//Saves picture
-					if (hasPicture == false && l > 0) {
-
-						cropImg = image2(bounding_rect);
-
-
-						cv::imwrite("C:/GitHub/ZEDProject/build/cropImg.jpg", cropImg);
-						//hasPicture = true;
-					}
-					l++;
 
 					//Bounding Box Center
 					cv::Point center = cv::Point(bounding_rect.x + (bounding_rect.width / 2), bounding_rect.y + (bounding_rect.height / 2));
@@ -280,7 +271,7 @@ int main(int argc, char **argv) {
 					cv::normalize(g_hist, g_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
 					cv::normalize(r_hist, r_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
 
-					float blue_mean, green_mean, red_mean, colorNumber = 0;
+					
 
 					for (int i = 1; i < histSize; i++)
 					{
@@ -342,6 +333,12 @@ int main(int argc, char **argv) {
 						if (!std::isnan(dist) && isWithinBox == true) {
 							finalDistance = cv::norm(receivedVector, feature_Vec);
 
+
+							if (finalDistance < smallestDistance) {
+								smallestDistance = finalDistance;
+								smallestDistance_index = (float)i;
+							}
+
 							if (i == 1) {
 								gal1 = finalDistance;
 							}
@@ -371,11 +368,6 @@ int main(int argc, char **argv) {
 							}
 
 
-							if (finalDistance < smallestDistance) {
-								smallestDistance = finalDistance;
-								smallestDistance_index = (float)i;
-							}
-
 						}
 
 
@@ -386,8 +378,8 @@ int main(int argc, char **argv) {
 						fs_receive.release();
 					}
 										
-					for (int i = 1; i < 10; i++) {
-						std::string probeString = std::string("Probe") + std::to_string(i) + std::string(".txt");
+					for (int i = 1; i < 4; i++) {
+						std::string probeString = std::string("ProbeGal") + std::to_string(i) + std::string(".txt");
 						cv::FileStorage fs_receive(probeString, cv::FileStorage::READ);
 
 						fs_receive["Hour"] >> r_hour;
@@ -403,11 +395,23 @@ int main(int argc, char **argv) {
 						fs_receive["Gallery8"] >> r_gal8;
 						fs_receive["Gallery9"] >> r_gal9;
 
+						cv::Mat r_galMat(9, 1, CV_32F, r_galArray);
+						cv::Mat galMat(9, 1, CV_32F, galArray);
+
+						probeDistance = cv::norm(galMat, r_galMat);
+
+						if (probeDistance < probeGalShortestDistance) {
+							probeGalShortestDistance = probeDistance;
+							probeGalDistanceIndex = (float)i;
+						}
+
+
+
 						fs_receive.release();
 					}
-					cv::Mat r_galMat(9, 1, CV_32F, r_galArray);
-					cv::Mat galMat(9, 1, CV_32F, galArray);
-					probeDistance = cv::norm(galMat, r_galMat);
+					
+					
+					std::cout << "Probe distance: " << probeDistance << std::endl;
 
 					if (foundContour == true && hasPicture == false && !std::isnan(dist)&& err2 == SUCCESS) {
 
@@ -423,7 +427,7 @@ int main(int argc, char **argv) {
 						fs << "Red" << (int)red_mean;
 						fs << "Depth" << dist;
 						fs << "Closest to" << smallestDistance_index;
-						fs << "Distance to gallery" << smallestDistance;
+						fs << "Distance to gallery" << (int)smallestDistance;
 						//	fs << "Shortest Distance " << smallestDistance;
 						fs << "Gallery1" << gal1;
 						fs << "Gallery2" << gal2;
@@ -434,10 +438,11 @@ int main(int argc, char **argv) {
 						fs << "Gallery7" << gal7;
 						fs << "Gallery8" << gal8;
 						fs << "Gallery9" << gal9;
+						//fs << "PROBE DISTANCE: " << probeDistance;
 
 						fs.release();
 						imshow("calcHist demo", histImage);
-
+						cropImg = image2(bounding_rect);
 						cv::imwrite("C:/GitHub/ZEDProject/build/cropImgA" + std::to_string(k) + ".jpg", cropImg);
 
 						k++;
@@ -461,7 +466,7 @@ int main(int argc, char **argv) {
 						fs << "Red" << (int)red_mean;
 						fs << "Depth" << dist;
 						fs << "Closest to" << smallestDistance_index;
-						fs << "Distance to gallery" << smallestDistance;
+						fs << "Distance to gallery" << (int)smallestDistance;
 						fs << "Gallery1" << gal1;
 						fs << "Gallery2" << gal2;
 						fs << "Gallery3" << gal3;
@@ -471,13 +476,15 @@ int main(int argc, char **argv) {
 						fs << "Gallery7" << gal7;
 						fs << "Gallery8" << gal8;
 						fs << "Gallery9" << gal9;
+						fs << "Closest to ProbeGallery" << probeGalDistanceIndex;
+						fs << "Distance to ProbeGallery" << probeDistance;
 						//	fs << "Gallery Matrix" << gals;
 						//	fs << "Shortest Distance " << smallestDistance;
 						//fs << "ProbeDistance" << probeDistance;
 
 						fs.release();
 						imshow("calcHist demo", histImage);
-
+						cropImg = image2(bounding_rect);
 						cv::imwrite("C:/GitHub/ZEDProject/build/cropImgB" + std::to_string(k) + ".jpg", cropImg);
 
 						k++;
@@ -488,12 +495,14 @@ int main(int argc, char **argv) {
 
 					if (dist > 0.8) {
 						std::cout << "Euclidean Distance " << std::to_string(smallestDistance_index) << ": " << smallestDistance << std::endl;
-
+					
 					}
 					
 
 				}
 				else {
+					blue_mean, green_mean, red_mean, dist = 0;
+					smallestDistance = 100;
 					isWithinBox = false;
 					isNextProbe = false;
 					foundContour = false;
