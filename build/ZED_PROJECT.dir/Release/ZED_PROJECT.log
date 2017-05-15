@@ -82,26 +82,27 @@ C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(476): warning C4251: 'sl::S
   C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(343): note: see declaration of 'std::pair<float,float>'
 C:\Program Files (x86)\ZED SDK\include\sl/Camera.hpp(558): warning C4251: 'sl::Pose::pose_data': class 'sl::Transform' needs to have dll-interface to be used by clients of class 'sl::Pose'
   C:\Program Files (x86)\ZED SDK\include\sl/Core.hpp(859): note: see declaration of 'sl::Transform'
-C:\GitHub\ZEDProject\src\main.cpp(51): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
-C:\GitHub\ZEDProject\src\main.cpp(51): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(52): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
-C:\GitHub\ZEDProject\src\main.cpp(52): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(196): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(338): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(343): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(346): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(349): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(352): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(355): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(358): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(361): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(364): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(367): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(403): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(307): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\GitHub\ZEDProject\src\main.cpp(195): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(336): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(341): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(344): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(347): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(350): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(353): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(356): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(359): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(362): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(365): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(384): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
+C:\GitHub\ZEDProject\src\main.cpp(384): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(385): warning C4838: conversion from 'int' to 'float' requires a narrowing conversion
+C:\GitHub\ZEDProject\src\main.cpp(385): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(404): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(408): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(305): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt\time.h(505): note: see declaration of 'localtime'
-C:\GitHub\ZEDProject\src\main.cpp(518): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(519): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\GitHub\ZEDProject\src\main.cpp(556): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-c:\github\zedproject\src\main.cpp(195): warning C4700: uninitialized local variable 'largest_area' used
+C:\GitHub\ZEDProject\src\main.cpp(532): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(533): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\GitHub\ZEDProject\src\main.cpp(570): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\github\zedproject\src\main.cpp(194): warning C4700: uninitialized local variable 'largest_area' used
   ZED_PROJECT.vcxproj -> C:\GitHub\ZEDProject\build\Release\ZED_PROJECT.exe

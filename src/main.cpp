@@ -45,11 +45,10 @@ float receivedRed, receivedGreen, receivedBlue, receivedDepth;
 double finalDistance;
 int k = 1;
 int l = 0;
-int gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9, probeGalDistanceIndex, probeGalShortestDistance;
+int gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9, probeGalDistanceIndex;
+int probeGalShortestDistance = 2000;
 int r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9, r_hour, r_min, r_sec, probeDistance;
 float receivedArray[9];
-float galArray[9] = { gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9 };
-float r_galArray[9] = { r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9 };
 float blue_mean, green_mean, red_mean, colorNumber = 0;
 
 
@@ -81,7 +80,7 @@ int main(int argc, char **argv) {
 	ERROR_CODE err1 = zed.open(init_params);
 	ERROR_CODE err2;
 	if (err1 != SUCCESS) {
-		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/Alex.svo"), false;
+		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/allan2.svo"), false;
 		init_params.svo_real_time_mode = false;
 		 err2 = zed.open(init_params);
 	}
@@ -154,7 +153,7 @@ int main(int argc, char **argv) {
 			imshow("Depth", depth_image_ocv_display);
 			cv::moveWindow("Depth", 0, 0);
 
-			image2.convertTo(image2, -1, 1.4, -30);
+			image2.convertTo(image2, -1, 2, -70);
 
 			//Conversion to YCC
 			cv::cvtColor(image2, image_ocv, CV_BGR2YCrCb);
@@ -254,7 +253,7 @@ int main(int argc, char **argv) {
 					cv::Mat red = bgr_planes[2];
 
 
-					/// Compute the histograms:
+					// Compute the histograms
 					cv::calcHist(&blue, 1, 0, cv::Mat(), b_hist, 1, &histSize, &histRange, uniform, accumulate);
 					cv::calcHist(&green, 1, 0, cv::Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate);
 					cv::calcHist(&red, 1, 0, cv::Mat(), r_hist, 1, &histSize, &histRange, uniform, accumulate);
@@ -266,7 +265,7 @@ int main(int argc, char **argv) {
 
 					cv::Mat histImage(hist_h, hist_w, CV_8UC3, cv::Scalar(0, 0, 0));
 
-					/// Normalize the result to [ 0, histImage.rows ]
+					// Normalize the result to [ 0, histImage.rows ]
 					cv::normalize(b_hist, b_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
 					cv::normalize(g_hist, g_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
 					cv::normalize(r_hist, r_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
@@ -292,11 +291,10 @@ int main(int argc, char **argv) {
 							cv::Scalar(0, 0, 255), 2, 8, 0);
 
 						red_mean = red_mean + cvRound(r_hist.at<float>(i - 1));
-						colorNumber++;
 					}
-					blue_mean = blue_mean / colorNumber;
-					green_mean = green_mean / colorNumber;
-					red_mean = red_mean / colorNumber;
+					blue_mean = blue_mean / histSize;
+					green_mean = green_mean / histSize;
+					red_mean = red_mean / histSize;
 
 					cv::Vec4d feature_Vec{ (double)blue_mean,(double)green_mean,(double)red_mean, (double)dist };
 					cv::Vec4d col_Vec_receive;
@@ -378,9 +376,13 @@ int main(int argc, char **argv) {
 						fs_receive.release();
 					}
 										
-					for (int i = 1; i < 4; i++) {
+					for (int i = 1; i < 5; i++) {
 						std::string probeString = std::string("ProbeGal") + std::to_string(i) + std::string(".txt");
 						cv::FileStorage fs_receive(probeString, cv::FileStorage::READ);
+
+
+						float galArray[9] = { gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9 };
+						float r_galArray[9] = { r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9 };
 
 						fs_receive["Hour"] >> r_hour;
 						fs_receive["Minute"] >> r_min;
@@ -394,6 +396,7 @@ int main(int argc, char **argv) {
 						fs_receive["Gallery7"] >> r_gal7;
 						fs_receive["Gallery8"] >> r_gal8;
 						fs_receive["Gallery9"] >> r_gal9;
+
 
 						cv::Mat r_galMat(9, 1, CV_32F, r_galArray);
 						cv::Mat galMat(9, 1, CV_32F, galArray);
@@ -413,7 +416,7 @@ int main(int argc, char **argv) {
 					
 					std::cout << "Probe distance: " << probeDistance << std::endl;
 
-					if (foundContour == true && hasPicture == false && !std::isnan(dist)&& err2 == SUCCESS) {
+					if (foundContour == true && hasPicture == false && !std::isnan(dist)&& err1 != SUCCESS) {
 
 						std::string probeString = std::string("ProbeA") + std::to_string(k) + std::string(".txt");
 
