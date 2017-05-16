@@ -15,15 +15,6 @@
 
 using namespace sl;
 
-typedef struct mouseOCVStruct {
-	Mat depth;
-	cv::Size _resize;
-} mouseOCV;
-
-mouseOCV mouseStruct;
-
-static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, void * param);
-
 
 cv::Mat slMat2cvMat(sl::Mat& input);
 
@@ -109,13 +100,8 @@ int main(int argc, char **argv) {
 
 	pMOG2 = cv::createBackgroundSubtractorMOG2(2000, 20, true); //MOG2 approach
 
-	// Mouse callback initialization 
-	mouseStruct.depth.alloc(image_size, MAT_TYPE_32F_C1);
-	mouseStruct._resize = displaySize;
-
 	// Give a name to OpenCV Windows
 	cv::namedWindow("Depth", cv::WINDOW_AUTOSIZE);
-	cv::setMouseCallback("Depth", onMouseCallback, (void*)&mouseStruct);
 
 	// Setup depth matrix
 	Mat depth;
@@ -131,7 +117,6 @@ int main(int argc, char **argv) {
 			zed.retrieveImage(image_zed, VIEW_LEFT); // Retrieve the left image
 			zed.retrieveImage(depth_image_zed, VIEW_DEPTH); //Retrieve the depth view (image)
 			zed.retrieveMeasure(depth, MEASURE_DEPTH); // Retrieve the depth measure (32bits)
-			zed.retrieveMeasure(mouseStruct.depth, MEASURE_DEPTH);
 
 			// Displays RGB
 			cv::resize(image2, image_ocv_display, displaySize);
@@ -179,14 +164,14 @@ int main(int argc, char **argv) {
 
 			cv::findContours(fgmaskMOG2, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
-			for (int i = 0; i < contours.size(); i++) {
+			/*for (int i = 0; i < contours.size(); i++) {
 				double a = cv::contourArea(contours[i], false);
 				if (a > largest_area) {
 					largest_area = a;
 					largest_contour_index = i;
 				}
 
-			}
+			}*/
 
 			for (int j = 0; j < contours.size(); j++) {
 				//cv::drawContours(image2, contours, j, CV_RGB(255, 0, 0), 6, 8, hierarchy, 0, cv::Point());
@@ -510,30 +495,6 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-//MouseCallback
-static void onMouseCallback(int32_t event, int32_t x, int32_t y, int32_t flag, void * param) {
-	if (event == CV_EVENT_LBUTTONDOWN) {
-		mouseOCVStruct* data = (mouseOCVStruct*)param;
-		int y_int = (y * data->depth.getHeight() / data->_resize.height);
-		int x_int = (x * data->depth.getWidth() / data->_resize.width);
-
-		sl::float1 dist;
-		data->depth.getValue(x_int, y_int, &dist);
-
-		std::cout << std::endl;
-		if (isValidMeasure(dist))
-			std::cout << "Depth at (" << x_int << "," << y_int << ") : " << dist << "m";
-		else {
-			std::string depth_status;
-			if (dist == TOO_FAR) depth_status = ("Depth is too far.");
-			else if (dist == TOO_CLOSE) depth_status = ("Depth is too close.");
-			else depth_status = ("Depth not available");
-			std::cout << depth_status;
-		}
-		std::cout << std::endl;
-	}
-}
-
 //Mat Conversion
 cv::Mat slMat2cvMat(sl::Mat& input) {
 	//convert MAT_TYPE to CV_TYPE
@@ -549,8 +510,5 @@ cv::Mat slMat2cvMat(sl::Mat& input) {
 	case sl::MAT_TYPE_8U_C4: cv_type = CV_8UC4; break;
 	default: break;
 	}
-
-	 //cv::Mat data requires a uchar* pointer. Therefore, we get the uchar1 pointer from sl::Mat (getPtr<T>())
-	//cv::Mat and sl::Mat will share the same memory pointer
 	return cv::Mat(input.getHeight(), input.getWidth(), cv_type, input.getPtr<sl::uchar1>(MEM_CPU));
 }
