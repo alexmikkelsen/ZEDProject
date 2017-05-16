@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
 			cv::Mat y_hist, cr_hist, cb_hist;
 
 			if (bounding_rect.width > 200 && bounding_rect.height > 200 && bounding_rect.width < 600 && bounding_rect.height < 600) {
-				cv::Mat cropImg = image_ocv(bounding_rect);
+				cv::Mat cropImg;
 
 
 				//cvWaitKey(0);
@@ -196,6 +196,7 @@ int main(int argc, char **argv) {
 
 					foundContour = true;
 					isWithinBox = true;
+					cropImg = image_ocv(bounding_rect);
 					cv::imshow("Cropped", cropImg);
 					cv::moveWindow("Cropped", 800, 0);
 
