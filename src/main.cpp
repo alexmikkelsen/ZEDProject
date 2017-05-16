@@ -41,7 +41,7 @@ float distMean = 0;
 //float smallestDistance = 0;
 float receivedDistance = 0;
 float dist;
-float receivedRed, receivedGreen, receivedBlue, receivedDepth;
+float receivedCb, receivedCr, receivedY, receivedDepth;
 double finalDistance;
 int k = 1;
 int l = 0;
@@ -49,7 +49,7 @@ int gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9, probeGalDistanceIndex;
 int probeGalShortestDistance = 2000;
 int r_gal1, r_gal2, r_gal3, r_gal4, r_gal5, r_gal6, r_gal7, r_gal8, r_gal9, r_hour, r_min, r_sec, probeDistance;
 float receivedArray[9];
-float blue_mean, green_mean, red_mean, colorNumber = 0;
+float y_mean, cr_mean, cb_mean, colorNumber = 0;
 
 
 cv::Ptr<cv::BackgroundSubtractorMOG2> pMOG2;
@@ -66,15 +66,6 @@ int main(int argc, char **argv) {
 	init_params.depth_mode = DEPTH_MODE_PERFORMANCE;
 	init_params.coordinate_units = sl::UNIT_METER;
 	init_params.camera_fps = 15;
-	/*
-	init_params.camera_fps = 0;
-	init_params.coordinate_system = COORDINATE_SYSTEM_IMAGE;
-	init_params.sdk_verbose = false;
-	init_params.sdk_gpu_id = -1;
-	init_params.depth_minimum_distance = -1;
-	init_params.camera_disable_self_calib = false;
-	init_params.camera_image_flip = false;
-	*/
 
 	// Open the camera
 	ERROR_CODE err1 = zed.open(init_params);
@@ -117,7 +108,6 @@ int main(int argc, char **argv) {
 
 
 	pMOG2 = cv::createBackgroundSubtractorMOG2(2000, 20, true); //MOG2 approach
-	//cv::BackgroundSubtractorMOG2::setDetectShadows(false);
 
 	// Mouse callback initialization 
 	mouseStruct.depth.alloc(image_size, MAT_TYPE_32F_C1);
@@ -125,6 +115,7 @@ int main(int argc, char **argv) {
 
 	// Give a name to OpenCV Windows
 	cv::namedWindow("Depth", cv::WINDOW_AUTOSIZE);
+	cv::setMouseCallback("Depth", onMouseCallback, (void*)&mouseStruct);
 
 	// Setup depth matrix
 	Mat depth;
@@ -137,11 +128,10 @@ int main(int argc, char **argv) {
 		// Grab and display image and depth 
 		if (zed.grab(runtime_parameters) == SUCCESS) {
 
-
-
 			zed.retrieveImage(image_zed, VIEW_LEFT); // Retrieve the left image
 			zed.retrieveImage(depth_image_zed, VIEW_DEPTH); //Retrieve the depth view (image)
 			zed.retrieveMeasure(depth, MEASURE_DEPTH); // Retrieve the depth measure (32bits)
+			zed.retrieveMeasure(mouseStruct.depth, MEASURE_DEPTH);
 
 			// Displays RGB
 			cv::resize(image2, image_ocv_display, displaySize);
@@ -210,7 +200,7 @@ int main(int argc, char **argv) {
 			const float* histRange = { range };
 			bool uniform = true;
 			bool accumulate = false;
-			cv::Mat b_hist, g_hist, r_hist;
+			cv::Mat y_hist, cr_hist, cb_hist;
 
 			if (bounding_rect.width > 200 && bounding_rect.height > 200 && bounding_rect.width < 600 && bounding_rect.height < 600) {
 				cv::Mat cropImg = image_ocv(bounding_rect);
@@ -234,29 +224,24 @@ int main(int argc, char **argv) {
 
 					depth.getValue(x_int, y_int, &dist);
 
-					distSum = distSum + dist;
-					distMean = distSum / heightNumber;
-					distMean = std::floorf(distMean * 100) / 100;
 					heightNumber++;
-
-
 
 					if (dist > 0 && !std::isnan(dist)) {
 						std::cout << "Depth: " << dist << std::endl;
 						cv::waitKey(20);
 					}
 
-					std::vector<cv::Mat> bgr_planes;
-					split(cropImg, bgr_planes);
-					cv::Mat blue = bgr_planes[0];
-					cv::Mat green = bgr_planes[1];
-					cv::Mat red = bgr_planes[2];
+					std::vector<cv::Mat> ycc_planes;
+					split(cropImg, ycc_planes);
+					cv::Mat y = ycc_planes[0];
+					cv::Mat cr = ycc_planes[1];
+					cv::Mat cb = ycc_planes[2];
 
 
 					// Compute the histograms
-					cv::calcHist(&blue, 1, 0, cv::Mat(), b_hist, 1, &histSize, &histRange, uniform, accumulate);
-					cv::calcHist(&green, 1, 0, cv::Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate);
-					cv::calcHist(&red, 1, 0, cv::Mat(), r_hist, 1, &histSize, &histRange, uniform, accumulate);
+					cv::calcHist(&y, 1, 0, cv::Mat(), y_hist, 1, &histSize, &histRange, uniform, accumulate);
+					cv::calcHist(&cr, 1, 0, cv::Mat(), cr_hist, 1, &histSize, &histRange, uniform, accumulate);
+					cv::calcHist(&cb, 1, 0, cv::Mat(), cb_hist, 1, &histSize, &histRange, uniform, accumulate);
 
 					// Draw the histograms for B, G and R
 					int hist_w = 512; int hist_h = 400;
@@ -266,37 +251,37 @@ int main(int argc, char **argv) {
 					cv::Mat histImage(hist_h, hist_w, CV_8UC3, cv::Scalar(0, 0, 0));
 
 					// Normalize the result to [ 0, histImage.rows ]
-					cv::normalize(b_hist, b_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
-					cv::normalize(g_hist, g_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
-					cv::normalize(r_hist, r_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
+					cv::normalize(y_hist, y_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
+					cv::normalize(cr_hist, cr_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
+					cv::normalize(cb_hist, cb_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
 
 					
 
 					for (int i = 1; i < histSize; i++)
 					{
-						line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(b_hist.at<float>(i - 1))),
-							cv::Point(bin_w*(i), hist_h - cvRound(b_hist.at<float>(i))),
+						line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(y_hist.at<float>(i - 1))),
+							cv::Point(bin_w*(i), hist_h - cvRound(y_hist.at<float>(i))),
 							cv::Scalar(255, 0, 0), 2, 8, 0);
 
-						blue_mean = blue_mean + cvRound(b_hist.at<float>(i - 1));
+						y_mean = y_mean + cvRound(y_hist.at<float>(i - 1));
 
-						line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(g_hist.at<float>(i - 1))),
-							cv::Point(bin_w*(i), hist_h - cvRound(g_hist.at<float>(i))),
+						line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(cr_hist.at<float>(i - 1))),
+							cv::Point(bin_w*(i), hist_h - cvRound(cr_hist.at<float>(i))),
 							cv::Scalar(0, 255, 0), 2, 8, 0);
 
-						green_mean = green_mean + cvRound(g_hist.at<float>(i - 1));
+						cr_mean = cr_mean + cvRound(cr_hist.at<float>(i - 1));
 
-						line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(r_hist.at<float>(i - 1))),
-							cv::Point(bin_w*(i), hist_h - cvRound(r_hist.at<float>(i))),
+						line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(cb_hist.at<float>(i - 1))),
+							cv::Point(bin_w*(i), hist_h - cvRound(cb_hist.at<float>(i))),
 							cv::Scalar(0, 0, 255), 2, 8, 0);
 
-						red_mean = red_mean + cvRound(r_hist.at<float>(i - 1));
+						cb_mean = cb_mean + cvRound(cb_hist.at<float>(i - 1));
 					}
-					blue_mean = blue_mean / histSize;
-					green_mean = green_mean / histSize;
-					red_mean = red_mean / histSize;
+					y_mean = y_mean / histSize;
+					cr_mean = cr_mean / histSize;
+					cb_mean = cb_mean / histSize;
 
-					cv::Vec4d feature_Vec{ (double)blue_mean,(double)green_mean,(double)red_mean, (double)dist };
+					cv::Vec4d feature_Vec{ (double)y_mean,(double)cr_mean,(double)cb_mean, (double)dist };
 					cv::Vec4d col_Vec_receive;
 					cv::Vec4d receivedVector;
 						
@@ -311,9 +296,9 @@ int main(int argc, char **argv) {
 						std::string galleryString = std::string("Gallery") + std::to_string(i) + std::string(".txt");
 
 						cv::FileStorage fs_receive(galleryString, cv::FileStorage::READ);
-						fs_receive["Red"] >> receivedRed;
-						fs_receive["Green"] >> receivedGreen;
-						fs_receive["Blue"] >> receivedBlue;
+						fs_receive["Y"] >> receivedY;
+						fs_receive["Cr"] >> receivedCr;
+						fs_receive["Cb"] >> receivedCb;
 						fs_receive["Depth"] >> receivedDepth;
 					/*	fs_receive["Gallery1"] >> r_gal1;
 						fs_receive["Gallery2"] >> r_gal2;
@@ -325,7 +310,7 @@ int main(int argc, char **argv) {
 						fs_receive["Gallery8"] >> r_gal8;
 						fs_receive["Gallery9"] >> r_gal9;*/
 
-						receivedVector = { (double)receivedBlue, (double)receivedGreen, (double)receivedRed, (double)receivedDepth };
+						receivedVector = { (double)receivedY, (double)receivedCr, (double)receivedCb, (double)receivedDepth };
 
 
 						if (!std::isnan(dist) && isWithinBox == true) {
@@ -425,9 +410,9 @@ int main(int argc, char **argv) {
 						fs << "Minute" << min;
 						fs << "Seconds" << sec;
 						//fs << "Means " << feature_Vec;
-						fs << "Blue" << (int)blue_mean;
-						fs << "Green" << (int)green_mean;
-						fs << "Red" << (int)red_mean;
+						fs << "Y" << (int)y_mean;
+						fs << "Cr" << (int)cr_mean;
+						fs << "Cb" << (int)cb_mean;
 						fs << "Depth" << dist;
 						fs << "Closest to" << smallestDistance_index;
 						fs << "Distance to gallery" << (int)smallestDistance;
@@ -464,9 +449,9 @@ int main(int argc, char **argv) {
 						fs << "Minute" << min;
 						fs << "Seconds" << sec;
 						//fs << "Means " << feature_Vec;
-						fs << "Blue" << (int)blue_mean;
-						fs << "Green" << (int)green_mean;
-						fs << "Red" << (int)red_mean;
+						fs << "Y" << (int)y_mean;
+						fs << "Cr" << (int)cr_mean;
+						fs << "Cb" << (int)cb_mean;
 						fs << "Depth" << dist;
 						fs << "Closest to" << smallestDistance_index;
 						fs << "Distance to gallery" << (int)smallestDistance;
@@ -504,7 +489,7 @@ int main(int argc, char **argv) {
 
 				}
 				else {
-					blue_mean, green_mean, red_mean, dist = 0;
+					y_mean, cr_mean, cb_mean, dist = 0;
 					smallestDistance = 100;
 					isWithinBox = false;
 					isNextProbe = false;
