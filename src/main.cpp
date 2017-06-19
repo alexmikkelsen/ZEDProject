@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
 	ERROR_CODE err1 = zed.open(init_params);
 	ERROR_CODE err2;
 	if (err1 != SUCCESS) {
-		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/alex1.svo"), false;
+		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/allan2.svo"), false;
 		init_params.svo_real_time_mode = false;
 		 err2 = zed.open(init_params);
 	}
