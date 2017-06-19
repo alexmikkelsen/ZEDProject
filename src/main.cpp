@@ -33,7 +33,7 @@ float distMean = 0;
 float receivedDistance = 0;
 float dist;
 float receivedCb, receivedCr, receivedY, receivedDepth;
-double finalDistance;
+double finalDistance, ycompHist, crcompHist, cbcompHist;
 int k = 1;
 int l = 0;
 int gal1, gal2, gal3, gal4, gal5, gal6, gal7, gal8, gal9, gal10, gal11, gal12, probeGalDistanceIndex;
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
 	ERROR_CODE err1 = zed.open(init_params);
 	ERROR_CODE err2;
 	if (err1 != SUCCESS) {
-		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/alex2.svo"), false;
+		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/alex1.svo"), false;
 		init_params.svo_real_time_mode = false;
 		 err2 = zed.open(init_params);
 	}
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 			imshow("Depth", depth_image_ocv_display);
 			cv::moveWindow("Depth", 0, 0);
 
-			image2.convertTo(image2, -1, 1.4, -30);
+			image2.convertTo(image2, -1, 1, -30);
 
 			//Conversion to YCC
 			cv::cvtColor(image2, image_ocv, CV_BGR2YCrCb);
@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
 					heightNumber++;
 
 					if (dist > 0 && !std::isnan(dist)) {
-						std::cout << "Depth: " << dist << std::endl;
+						//std::cout << "Depth: " << dist << std::endl;
 						cv::waitKey(20);
 					}
 
@@ -244,7 +244,7 @@ int main(int argc, char **argv) {
 					cv::normalize(cb_hist, cb_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat());
 
 					
-
+					/*
 					for (int i = 1; i < histSize; i++)
 					{
 						line(histImage, cv::Point(bin_w*(i - 1), hist_h - cvRound(y_hist.at<float>(i - 1))),
@@ -268,6 +268,31 @@ int main(int argc, char **argv) {
 					y_mean = y_mean / histSize;
 					cr_mean = cr_mean / histSize;
 					cb_mean = cb_mean / histSize;
+					*/
+
+					cv::Mat y_histGal;
+					std::string y_histGalS = "y_histogram";
+					cv::FileStorage y_histfs("histogram_y.yml", cv::FileStorage::READ);
+					y_histfs["y_histogram"] >> y_histGal;
+					y_histfs.release();
+
+					cv::Mat cr_histGal;
+					cv::FileStorage cr_histfs("histogram_cr.yml", cv::FileStorage::READ);
+					cr_histfs["cr_histogram"] >> cr_histGal;
+					cr_histfs.release();
+
+					cv::Mat cb_histGal;
+					cv::FileStorage cb_histfs("histogram_cb.yml", cv::FileStorage::READ);
+					cb_histfs["cb_histogram"] >> cb_histGal;
+					cb_histfs.release();
+
+					ycompHist = cv::compareHist(y_hist, y_histGal, 0);
+					crcompHist = cv::compareHist(cr_hist, cr_histGal, 0);
+					cbcompHist = cv::compareHist(cb_hist, cb_histGal, 0);
+
+					
+
+					
 
 					cv::Vec4d feature_Vec{ (double)y_mean,(double)cr_mean,(double)cb_mean, (double)dist };
 					cv::Vec4d col_Vec_receive;
@@ -279,6 +304,7 @@ int main(int argc, char **argv) {
 					int hour = ltm->tm_hour;
 					int min = ltm->tm_min;
 					int sec = ltm->tm_sec;
+					
 
 					for (int i = 1; i < 13; i++) {
 						std::string galleryString = std::string("Gallery") + std::to_string(i) + std::string(".txt");
@@ -288,6 +314,18 @@ int main(int argc, char **argv) {
 						fs_receive["Cr"] >> receivedCr;
 						fs_receive["Cb"] >> receivedCb;
 						fs_receive["Depth"] >> receivedDepth;
+
+						double depthprob = cv::min(receivedDepth, dist) / cv::max(receivedDepth, dist);
+						//std::cout << "MinDepth: " << cv::min(receivedDepth, dist) << ",  MaxDepth: " << cv::max(receivedDepth, dist) << std::endl;
+
+						if (ycompHist > 0.8 && crcompHist > 0.9 && cbcompHist > 0.9 && depthprob > 0.95) {
+							std::cout << "Match Found!" << std::endl;
+
+							std::cout << "	Y Hist: " << ycompHist << std::endl;
+							std::cout << "	Cr Hist: " << crcompHist << std::endl;
+							std::cout << "	Cb Hist: " << cbcompHist << std::endl;
+							std::cout << "	Depth: " << depthprob << std::endl;
+						}
 
 						receivedVector = { (double)receivedY, (double)receivedCr, (double)receivedCb, (double)receivedDepth };
 
@@ -385,7 +423,7 @@ int main(int argc, char **argv) {
 					}*/
 					
 					
-					std::cout << "Probe distance: " << probeDistance << std::endl;
+					//std::cout << "Probe distance: " << probeDistance << std::endl;
 
 					if (foundContour == true && hasPicture == false && !std::isnan(dist)&& err1 != SUCCESS) {
 
@@ -416,9 +454,21 @@ int main(int argc, char **argv) {
 						fs << "Gallery11" << gal11;
 						fs << "Gallery12" << gal12;
 						//fs << "PROBE DISTANCE: " << probeDistance;
+						/*
+						cv::FileStorage y_histfs("histogram_y.yml", cv::FileStorage::WRITE);
+						y_histfs << "y_histogram" << y_hist;
+						y_histfs.release();
 
+						cv::FileStorage cr_histfs("histogram_cr.yml", cv::FileStorage::WRITE);
+						cr_histfs << "cr_histogram" << cr_hist;
+						cr_histfs.release();
+
+						cv::FileStorage cb_histfs("histogram_cb.yml", cv::FileStorage::WRITE);
+						cb_histfs << "cb_histogram" << cb_hist;
+						cb_histfs.release();
+						*/
 						fs.release();
-						imshow("calcHist demo", histImage);
+						//imshow("calcHist demo", histImage);
 						cropImg = image2(bounding_rect);
 						cv::imwrite("C:/GitHub/ZEDProject/build/cropImgA" + std::to_string(k) + ".jpg", cropImg);
 
@@ -431,7 +481,7 @@ int main(int argc, char **argv) {
 
 
 					if (dist > 0.8) {
-						std::cout << "Euclidean Distance " << std::to_string(smallestDistance_index) << ": " << smallestDistance << std::endl;
+						//std::cout << "Euclidean Distance " << std::to_string(smallestDistance_index) << ": " << smallestDistance << std::endl;
 					
 					}
 					
