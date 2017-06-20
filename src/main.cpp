@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
 	ERROR_CODE err1 = zed.open(init_params);
 	ERROR_CODE err2;
 	if (err1 != SUCCESS) {
-		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/allan2.svo"), false;
+		init_params.svo_input_filename = ("C:/GitHub/ZEDProject/dan.svo"), false;
 		init_params.svo_real_time_mode = false;
 		 err2 = zed.open(init_params);
 	}
@@ -270,25 +270,7 @@ int main(int argc, char **argv) {
 					cb_mean = cb_mean / histSize;
 					*/
 
-					cv::Mat y_histGal;
-					std::string y_histGalS = "y_histogram";
-					cv::FileStorage y_histfs("histogram_y.yml", cv::FileStorage::READ);
-					y_histfs["y_histogram"] >> y_histGal;
-					y_histfs.release();
-
-					cv::Mat cr_histGal;
-					cv::FileStorage cr_histfs("histogram_cr.yml", cv::FileStorage::READ);
-					cr_histfs["cr_histogram"] >> cr_histGal;
-					cr_histfs.release();
-
-					cv::Mat cb_histGal;
-					cv::FileStorage cb_histfs("histogram_cb.yml", cv::FileStorage::READ);
-					cb_histfs["cb_histogram"] >> cb_histGal;
-					cb_histfs.release();
-
-					ycompHist = cv::compareHist(y_hist, y_histGal, 0);
-					crcompHist = cv::compareHist(cr_hist, cr_histGal, 0);
-					cbcompHist = cv::compareHist(cb_hist, cb_histGal, 0);
+					
 
 					
 
@@ -305,28 +287,70 @@ int main(int argc, char **argv) {
 					int min = ltm->tm_min;
 					int sec = ltm->tm_sec;
 					
+					double highestSum = 0;
+					double ycompHistHigh, crcompHistHigh, cbcompHistHigh, depthprobHigh;
+					int bestMatch = 0;
+					int temphour, tempmin, tempsec, bhour, bmin, bsec, chour, cmin, csec;
 
-					for (int i = 1; i < 13; i++) {
+					for (int i = 1; i < 17; i++) {
 						std::string galleryString = std::string("Gallery") + std::to_string(i) + std::string(".txt");
 
 						cv::FileStorage fs_receive(galleryString, cv::FileStorage::READ);
+						fs_receive["Hour"] >> temphour;
+						fs_receive["Minute"] >> tempmin;
+						fs_receive["Seconds"] >> tempsec;
 						fs_receive["Y"] >> receivedY;
 						fs_receive["Cr"] >> receivedCr;
 						fs_receive["Cb"] >> receivedCb;
 						fs_receive["Depth"] >> receivedDepth;
 
+						chour = hour - temphour;
+						cmin = min - tempmin;
+						csec = sec - tempsec;
+						
+						// Histogram
+						std::string histString = std::string("histGal") + std::to_string(i) + std::string(".yml");
+
+						cv::Mat y_histGal, cr_histGal, cb_histGal;
+						cv::FileStorage histfs(histString, cv::FileStorage::READ);
+						histfs["y_histogram"] >> y_histGal;
+						histfs["cr_histogram"] >> cr_histGal;
+						histfs["cb_histogram"] >> cb_histGal;
+						histfs.release();
+						
+						ycompHist = cv::compareHist(y_hist, y_histGal, 0);
+						crcompHist = cv::compareHist(cr_hist, cr_histGal, 0);
+						cbcompHist = cv::compareHist(cb_hist, cb_histGal, 0);
+
 						double depthprob = cv::min(receivedDepth, dist) / cv::max(receivedDepth, dist);
+
+						std::cout << "Gallery nr. " << i << std::endl;
+						std::cout << "	Y Hist: " << ycompHist << std::endl;
+						std::cout << "	Cr Hist: " << crcompHist << std::endl;
+						std::cout << "	Cb Hist: " << cbcompHist << std::endl;
+						std::cout << "	Depth: " << depthprob << std::endl << std::endl;
+						
+						
 						//std::cout << "MinDepth: " << cv::min(receivedDepth, dist) << ",  MaxDepth: " << cv::max(receivedDepth, dist) << std::endl;
 
-						if (ycompHist > 0.8 && crcompHist > 0.9 && cbcompHist > 0.9 && depthprob > 0.95) {
-							std::cout << "Match Found!" << std::endl;
+						if (ycompHist > 0.5 && crcompHist > 0.7 && cbcompHist > 0.7 && depthprob > 0.01) {
+							std::cout << "Match Found! Gallery nr. " << i << std::endl;
 
-							std::cout << "	Y Hist: " << ycompHist << std::endl;
-							std::cout << "	Cr Hist: " << crcompHist << std::endl;
-							std::cout << "	Cb Hist: " << cbcompHist << std::endl;
-							std::cout << "	Depth: " << depthprob << std::endl;
+							double sumGal = ycompHist + crcompHist + cbcompHist + depthprob;
+
+							if (sumGal > highestSum) {
+								highestSum = sumGal;
+								bestMatch = i;
+								ycompHistHigh = ycompHist;
+								crcompHistHigh = crcompHist;
+								cbcompHistHigh = cbcompHist;
+								depthprobHigh = depthprob;
+								bhour = cv::abs(chour);
+								bmin = cv::abs(cmin);
+								bsec = cv::abs(csec);
+							}
 						}
-
+						
 						receivedVector = { (double)receivedY, (double)receivedCr, (double)receivedCb, (double)receivedDepth };
 
 
@@ -385,6 +409,16 @@ int main(int argc, char **argv) {
 
 						fs_receive.release();
 					}
+
+					if (bestMatch > 0) {
+						std::cout << "Best match: Gallery nr. " << bestMatch << std::endl;
+						std::cout << "Time between places: " << bhour << ":" << bmin << ":" << bsec<< std::endl << std::endl;
+						/*std::cout << "	Y Hist: " << ycompHistHigh << std::endl;
+						std::cout << "	Cr Hist: " << crcompHistHigh << std::endl;
+						std::cout << "	Cb Hist: " << cbcompHistHigh << std::endl;
+						std::cout << "	Depth: " << depthprobHigh << std::endl << std::endl;*/
+					}
+
 										/*
 					for (int i = 1; i < 4; i++) {
 						std::string probeString = std::string("ProbeGal") + std::to_string(i) + std::string(".txt");
@@ -454,11 +488,14 @@ int main(int argc, char **argv) {
 						fs << "Gallery11" << gal11;
 						fs << "Gallery12" << gal12;
 						//fs << "PROBE DISTANCE: " << probeDistance;
+						
 						/*
-						cv::FileStorage y_histfs("histogram_y.yml", cv::FileStorage::WRITE);
-						y_histfs << "y_histogram" << y_hist;
-						y_histfs.release();
-
+						cv::FileStorage histfs("histGal.yml", cv::FileStorage::WRITE);
+						histfs << "y_histogram" << y_hist;
+						histfs << "cr_histogram" << cr_hist;
+						histfs << "cb_histogram" << cb_hist;
+						histfs.release();
+						
 						cv::FileStorage cr_histfs("histogram_cr.yml", cv::FileStorage::WRITE);
 						cr_histfs << "cr_histogram" << cr_hist;
 						cr_histfs.release();
