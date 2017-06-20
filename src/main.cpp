@@ -318,9 +318,9 @@ int main(int argc, char **argv) {
 						histfs["cb_histogram"] >> cb_histGal;
 						histfs.release();
 						
-						ycompHist = cv::compareHist(y_hist, y_histGal, 3);
-						crcompHist = cv::compareHist(cr_hist, cr_histGal, 3);
-						cbcompHist = cv::compareHist(cb_hist, cb_histGal, 3);
+						ycompHist = cv::compareHist(y_hist, y_histGal, 0);
+						crcompHist = cv::compareHist(cr_hist, cr_histGal, 0);
+						cbcompHist = cv::compareHist(cb_hist, cb_histGal, 0);
 
 						double depthprob = cv::min(receivedDepth, dist) / cv::max(receivedDepth, dist);
 
@@ -333,7 +333,7 @@ int main(int argc, char **argv) {
 						
 						//std::cout << "MinDepth: " << cv::min(receivedDepth, dist) << ",  MaxDepth: " << cv::max(receivedDepth, dist) << std::endl;
 
-						if (ycompHist > 0.5 && crcompHist > 0.7 && cbcompHist > 0.7 && depthprob > 0.01) {
+						if (ycompHist > 0.5 && crcompHist > 0.7 && cbcompHist > 0.7 && depthprob > 0.9) {
 							std::cout << "Match Found! Gallery nr. " << i << std::endl;
 
 							double sumGal = ycompHist * 0.5 + crcompHist + cbcompHist + depthprob;
